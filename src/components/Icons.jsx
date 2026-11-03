@@ -1,0 +1,21 @@
+const base = { width: 22, height: 22, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 2, strokeLinecap: 'round', strokeLinejoin: 'round', 'aria-hidden': true }
+const mk = (d) => (props) => <svg {...base} {...props}>{d}</svg>
+
+export const IconSearch = mk(<><circle cx="11" cy="11" r="7" /><path d="M20 20l-3.5-3.5" /></>)
+export const IconHeart = mk(<path d="M12 20s-7-4.6-9-9.2C1.8 7.6 3.6 4.5 6.8 4.5c2 0 3.5 1.2 5.2 3 1.7-1.8 3.2-3 5.2-3 3.2 0 5 3.1 3.8 6.3C19 15.400 12 20 12 20z" />)
+export const IconBag = mk(<><path d="M5 8h14l-1 12H6L5 8z" /><path d="M9 8V6a3 3 0 016 0v2" /></>)
+export const IconUser = mk(<><circle cx="12" cy="8" r="4" /><path d="M4 21c1-4 4-6 8-6s7 2 8 6" /></>)
+export const IconMenu = mk(<><path d="M4 7h16M4 12h16M4 17h16" /></>)
+export const IconClose = mk(<path d="M6 6l12 12M18 6L6 18" />)
+export const IconPlus = mk(<path d="M12 5v14M5 12h14" />)
+export const IconMinus = mk(<path d="M5 12h14" />)
+export const IconCheck = mk(<path d="M5 12.500l4.500 4.500L19 7" />)
+export const IconArrow = mk(<path d="M5 12h14M13 6l6 6-6 6" />)
+export const IconChevron = mk(<path d="M6 9l6 6 6-6" />)
+export const IconTruck = mk(<><path d="M2 6h11v10H2zM13 10h4l4 3v3h-8" /><circle cx="7" cy="18" r="2" /><circle cx="17" cy="18" r="2" /></>)
+export const IconTrash = mk(<><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13" /></>)
+export const IconRuler = mk(<><path d="M3 16L16 3l5 5L8 21z" /><path d="M7 12l2 2M10 9l2 2M13 6l2 2" /></>)
+export const IconShield = mk(<path d="M12 3l8 3v6c0 4.500-3.400 8-8 9-4.600-1-8-4.500-8-9V6z" />)
+export const IconLeaf = mk(<><path d="M5 19C5 10 10 5 20 4c0 10-5 15-14 15z" /><path d="M5 19l8-8" /></>)
+export const IconRefresh = mk(<><path d="M20 11a8 8 0 00-14-4M4 4v4h4" /><path d="M4 13a8 8 0 0014 4M20 20v-4h-4" /></>)
+export const IconPhone = mk(<path d="M5 4h4l2 5-2.500 1.500a11 11 0 005 5L15 13l5 2v4a2 2 0 01-2 2A16 16 0 013 6a2 2 0 012-2z" />)

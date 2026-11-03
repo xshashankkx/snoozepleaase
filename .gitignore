@@ -1,0 +1,6 @@
+node_modules/
+dist/
+.claude/
+.impeccable/
+*.log
+.DS_Store
