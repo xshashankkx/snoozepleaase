@@ -1,11 +1,12 @@
 'use client'
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link, useNavigate } from '../lib/router'
 import Page from '../components/Page'
 import { Cloud, Moon } from '../components/Doodles'
 import { IconCheck } from '../components/Icons'
-import { useStore } from '../store/StoreProvider'
-import { useSite, SALE_PERCENT } from '../lib/site'
+import { useStore, useQuote } from '../store/StoreProvider'
+import { CodeBox, SumRows } from '../components/CodeBox'
+import { useSite } from '../lib/site'
 import { money } from '../lib/product'
 
 const STATES = ['Andhra Pradesh', 'Arunachal Pradesh', 'Assam', 'Bihar', 'Chhattisgarh', 'Goa', 'Gujarat', 'Haryana', 'Himachal Pradesh', 'Jharkhand', 'Karnataka', 'Kerala', 'Madhya Pradesh', 'Maharashtra', 'Manipur', 'Meghalaya', 'Mizoram', 'Nagaland', 'Odisha', 'Punjab', 'Rajasthan', 'Sikkim', 'Tamil Nadu', 'Telangana', 'Tripura', 'Uttar Pradesh', 'Uttarakhand', 'West Bengal', 'Andaman and Nicobar Islands', 'Chandigarh', 'Dadra and Nagar Haveli and Daman and Diu', 'Delhi', 'Jammu and Kashmir', 'Ladakh', 'Lakshadweep', 'Puducherry']
@@ -47,18 +48,28 @@ function Field({ id, label, error, children, hint }) {
 }
 
 export default function Checkout() {
-  const { lines, pricing, user, address, saveAddress, placeOrder } = useStore()
+  const { lines, user, address, saveAddress, placeOrder, hydrated } = useStore()
   const nav = useNavigate()
-  const { settings, announcement } = useSite()
-  const saleName = announcement.saleTag?.name || 'Sale'
+  const { settings } = useSite()
   const [f, setF] = useState(() => ({
     email: user?.email || '', phone: address?.phone || '', name: address?.name || user?.name || '', line1: address?.line1 || '', line2: address?.line2 || '',
     city: address?.city || '', state: address?.state || '', pin: address?.pin || '', ship: 'standard', pay: 'upi', upi: '', card: '', exp: '', cvv: '', note: '',
   }))
+  // Saved details load from browser storage just after the first paint, so fill any empty fields then.
+  useEffect(() => {
+    if (!hydrated) return
+    setF((x) => ({
+      ...x, email: x.email || user?.email || '', phone: x.phone || address?.phone || '', name: x.name || address?.name || user?.name || '',
+      line1: x.line1 || address?.line1 || '', line2: x.line2 || address?.line2 || '', city: x.city || address?.city || '', state: x.state || address?.state || '', pin: x.pin || address?.pin || '',
+    }))
+  }, [hydrated])
   const [err, setErr] = useState({})
   const [busy, setBusy] = useState(false)
   const summary = useRef(null)
-  const t = pricing(f.ship)
+  // The server prices the bag: catalog prices, stock, offers and codes, for the chosen shipping and shopper.
+  const { quote: t, loading, fresh, unavailable, error: quoteError } = useQuote(f.ship, { email: f.email, phone: f.phone })
+  const shipOffer = t.applied.find((a) => a.kind === 'shipping')
+  const standardFree = !!shipOffer || t.afterDiscount >= settings.freeShippingOver
   const set = (k) => (e) => setF((x) => ({ ...x, [k]: e.target.value }))
   const bind = (k, extra = {}) => ({ id: k, value: f[k], onChange: set(k), 'aria-invalid': !!err[k], 'aria-describedby': err[k] ? `${k}-err` : undefined, ...extra })
 
@@ -75,13 +86,14 @@ export default function Checkout() {
     const v = validate(f)
     setErr(v)
     const keys = Object.keys(v)
+    if (!fresh || unavailable) return
     if (keys.length) { document.getElementById(keys[0])?.focus(); summary.current?.scrollIntoView({ block: 'center', behavior: 'smooth' }); return }
     setBusy(true)
     setTimeout(() => {
       const addr = { name: f.name, phone: f.phone, line1: f.line1, line2: f.line2, city: f.city, state: f.state, pin: f.pin }
       saveAddress(addr)
       const order = placeOrder({
-        contact: { email: f.email, phone: f.phone }, address: addr, shipping: f.ship, note: f.note,
+        quote: t, contact: { email: f.email, phone: f.phone }, address: addr, shipping: f.ship, note: f.note,
         payment: f.pay === 'upi' ? `UPI (${f.upi})` : f.pay === 'card' ? `Card ending ${f.card.replace(/\s/g, '').slice(-4)}` : 'Cash on delivery',
       })
       nav(`/order/${order.id}`, { replace: true })
@@ -127,12 +139,12 @@ export default function Checkout() {
               <label className={`opt-row ${f.ship === 'standard' ? 'is-on' : ''}`}>
                 <input type="radio" name="ship" checked={f.ship === 'standard'} onChange={() => setF((x) => ({ ...x, ship: 'standard' }))} />
                 <span><strong>Standard</strong><small>{settings.standardDays} days</small></span>
-                <em>{pricing('standard').shipping === 0 ? 'Free' : money(settings.standardShipping)}</em>
+                <em>{standardFree ? 'Free' : money(settings.standardShipping)}</em>
               </label>
               <label className={`opt-row ${f.ship === 'express' ? 'is-on' : ''}`}>
                 <input type="radio" name="ship" checked={f.ship === 'express'} onChange={() => setF((x) => ({ ...x, ship: 'express' }))} />
                 <span><strong>Express</strong><small>{settings.expressDays} days</small></span>
-                <em>{money(settings.expressShipping)}</em>
+                <em>{shipOffer ? 'Free' : money(settings.expressShipping)}</em>
               </label>
             </fieldset>
 
@@ -171,13 +183,14 @@ export default function Checkout() {
                 </li>
               ))}
             </ul>
+            <CodeBox quote={t} loading={loading} />
             <dl className="sums">
-              <div><dt>Subtotal</dt><dd>{money(t.subtotal)}</dd></div>
-              <div className="sale"><dt>{saleName} ({SALE_PERCENT}% off)</dt><dd>−{money(t.discount)}</dd></div>
-              <div><dt>Shipping</dt><dd>{t.shipping === 0 ? 'Free' : money(t.shipping)}</dd></div>
+              <SumRows quote={t} />
               <div className="total"><dt>Total</dt><dd>{money(t.total)}</dd></div>
             </dl>
-            <button type="submit" className="btn btn--yellow btn--lg" disabled={busy}>{f.pay === 'cod' ? 'Place order' : `Pay ${money(t.total)}`}</button>
+            {unavailable && <p className="field-err" role="alert">Something in your bag is no longer available. Open your bag to remove it.</p>}
+            {quoteError && <p className="field-err" role="alert">{quoteError}</p>}
+            <button type="submit" className="btn btn--yellow btn--lg" disabled={busy || !fresh || loading || unavailable}>{f.pay === 'cod' ? 'Place order' : `Pay ${money(t.total)}`}</button>
             <p className="muted small">By placing your order you agree to our <Link to="/pages/privacy-policy">privacy policy</Link>.</p>
           </aside>
         </form>

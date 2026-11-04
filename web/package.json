@@ -12,6 +12,10 @@
     "generate:types": "cross-env NODE_OPTIONS=--no-deprecation payload generate:types",
     "payload": "cross-env NODE_OPTIONS=--no-deprecation payload",
     "seed": "cross-env NODE_OPTIONS=--no-deprecation tsx scripts/seed.ts",
+    "seed:discounts": "cross-env NODE_OPTIONS=--no-deprecation tsx scripts/seed-discounts.ts",
+    "check:quote": "cross-env NODE_OPTIONS=--no-deprecation tsx scripts/check-quote.ts",
+    "check:discount-admin": "cross-env NODE_OPTIONS=--no-deprecation tsx scripts/check-discount-admin.ts",
+    "check:discounts": "tsx scripts/check-discounts.ts",
     "demo-fill": "cross-env NODE_OPTIONS=--no-deprecation tsx scripts/demo-fill.ts",
     "seed:content": "cross-env NODE_OPTIONS=--no-deprecation tsx scripts/seed-content.ts",
     "dev-owner": "cross-env NODE_OPTIONS=--no-deprecation tsx scripts/dev-owner.ts"

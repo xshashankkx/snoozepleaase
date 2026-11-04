@@ -134,3 +134,15 @@ html:has(.page--paper) .hdr { background: var(--blue); }
   .ftr__cols { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 @media (max-width: 480px) { .ftr__field { flex-direction: column; } }
+
+
+/* discount code box and offer rows */
+.codebox { display: flex; gap: 0.6rem; align-items: center; }
+.codebox input { min-height: 44px; padding-block: 0.4rem; text-transform: uppercase; letter-spacing: 0.04em; }
+.codebox .btn { flex: none; }
+.codebox.is-good, .codebox.is-bad { justify-content: space-between; padding: 0.55rem 0.9rem; border-radius: 12px; font-weight: 700; font-size: 0.92rem; }
+.codebox.is-good { background: #e1f3e8; color: #14502c; }
+.codebox.is-bad { background: #fde7e5; color: #7c1710; }
+.codebox p { margin: 0; }
+.drawer__lines li.is-gone { opacity: 0.7; }
+.drawer__lines li.is-gone .drawer__img img { filter: grayscale(1); }

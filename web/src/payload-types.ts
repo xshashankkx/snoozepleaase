@@ -69,6 +69,7 @@ export interface Config {
   collections: {
     products: Product;
     'product-collections': ProductCollection;
+    discounts: Discount;
     'size-charts': SizeChart;
     pages: Page;
     posts: Post;
@@ -86,6 +87,7 @@ export interface Config {
   collectionsSelect: {
     products: ProductsSelect<false> | ProductsSelect<true>;
     'product-collections': ProductCollectionsSelect<false> | ProductCollectionsSelect<true>;
+    discounts: DiscountsSelect<false> | DiscountsSelect<true>;
     'size-charts': SizeChartsSelect<false> | SizeChartsSelect<true>;
     pages: PagesSelect<false> | PagesSelect<true>;
     posts: PostsSelect<false> | PostsSelect<true>;
@@ -377,6 +379,90 @@ export interface ProductCollection {
   updatedAt: string;
   createdAt: string;
   _status?: ('draft' | 'published') | null;
+}
+/**
+ * Sales, codes and offers. When more than one offer fits a bag, the best single offer wins, unless an offer is marked "can combine".
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "discounts".
+ */
+export interface Discount {
+  id: number;
+  /**
+   * Shoppers see this name in their bag, for example "Dreamtime Sale" or "Welcome code".
+   */
+  title: string;
+  /**
+   * Nothing happens for shoppers until this is ticked.
+   */
+  active?: boolean | null;
+  /**
+   * Optional. Leave empty to start straight away.
+   */
+  startsAt?: string | null;
+  /**
+   * Optional. Leave empty to run until switched off.
+   */
+  endsAt?: string | null;
+  method: 'automatic' | 'code';
+  /**
+   * Shoppers type this in. Letters and numbers only, for example WELCOME10.
+   */
+  code?: string | null;
+  type: 'percentage' | 'flat' | 'buy_x_get_y' | 'free_shipping';
+  /**
+   * A percentage (for example 10) or rupees (for example 150), depending on the choice above.
+   */
+  value?: number | null;
+  /**
+   * For every X + Y items in the bag, the cheapest Y get the discount. "Buy 2, get 1 free" is 2, 1 and 100%.
+   */
+  buy?: {
+    buyQty?: number | null;
+    getQty?: number | null;
+    getPercent?: number | null;
+  };
+  appliesTo?: ('all' | 'categories' | 'products') | null;
+  categories?: ('kids-nightwear' | 'co-ords' | 'bath-towels' | 'mom-me')[] | null;
+  products?: (number | Product)[] | null;
+  rules?: {
+    /**
+     * Optional. Counted on the items the offer applies to, before this offer.
+     */
+    minSubtotal?: number | null;
+    /**
+     * For shoppers with no earlier order. In this demo it is checked against orders saved in the shopper's browser, using the email or phone typed at checkout.
+     */
+    firstOrderOnly?: boolean | null;
+    /**
+     * Same demo-level check as above.
+     */
+    oncePerCustomer?: boolean | null;
+  };
+  /**
+   * Off by default: the best single offer wins. Tick this for offers that should stack, such as free shipping.
+   */
+  combinable?: boolean | null;
+  /**
+   * Marks this as the sale shown in the header tag and on product pages. Only one can be the headline sale at a time.
+   */
+  headline?: {
+    showInHeader?: boolean | null;
+    /**
+     * For example: Dreamtime Sale. Leave empty to use the offer name.
+     */
+    tagName?: string | null;
+    /**
+     * For example: 10% OFF. Leave empty to build it from the amount.
+     */
+    tagText?: string | null;
+  };
+  /**
+   * Live, Scheduled, Ended or Off.
+   */
+  liveStatus?: string | null;
+  updatedAt: string;
+  createdAt: string;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -743,6 +829,10 @@ export interface PayloadLockedDocument {
         value: number | ProductCollection;
       } | null)
     | ({
+        relationTo: 'discounts';
+        value: number | Discount;
+      } | null)
+    | ({
         relationTo: 'size-charts';
         value: number | SizeChart;
       } | null)
@@ -883,6 +973,48 @@ export interface ProductCollectionsSelect<T extends boolean = true> {
   updatedAt?: T;
   createdAt?: T;
   _status?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "discounts_select".
+ */
+export interface DiscountsSelect<T extends boolean = true> {
+  title?: T;
+  active?: T;
+  startsAt?: T;
+  endsAt?: T;
+  method?: T;
+  code?: T;
+  type?: T;
+  value?: T;
+  buy?:
+    | T
+    | {
+        buyQty?: T;
+        getQty?: T;
+        getPercent?: T;
+      };
+  appliesTo?: T;
+  categories?: T;
+  products?: T;
+  rules?:
+    | T
+    | {
+        minSubtotal?: T;
+        firstOrderOnly?: T;
+        oncePerCustomer?: T;
+      };
+  combinable?: T;
+  headline?:
+    | T
+    | {
+        showInHeader?: T;
+        tagName?: T;
+        tagText?: T;
+      };
+  liveStatus?: T;
+  updatedAt?: T;
+  createdAt?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -1314,7 +1446,7 @@ export interface AgeStep {
   createdAt?: string | null;
 }
 /**
- * The strip above the header and the "Dreamtime Sale" tag. Use Schedule to switch them on and off at set times.
+ * The strip above the header and the sale tag. The words in the tag come from the live headline sale in Discounts; the fields below are used only when no sale is marked as the headline. Use Schedule to switch things on and off at set times.
  *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "announcement".
@@ -1339,7 +1471,7 @@ export interface Announcement {
     enabled?: boolean | null;
     name?: string | null;
     /**
-     * Shown after the name. This text will later be filled in from the active Sale rule.
+     * Used only when no live sale in Discounts is marked as the headline sale.
      */
     offerText?: string | null;
     /**

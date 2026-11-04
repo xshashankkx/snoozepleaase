@@ -1,4 +1,4 @@
-# Snooze Pleaase storefront and CMS (slices 1 to 3)
+# Snooze Pleaase storefront and CMS (slices 1 to 4)
 
 Next.js + Payload CMS + PostgreSQL. One project: the admin at `/admin` and the shop at `/`. The Vite storefront in the repository root is the earlier prototype; this project replaces it.
 
@@ -29,9 +29,21 @@ The shop is the same design as the prototype, now server-rendered and reading ev
 - **Publish goes live in seconds:** content is cached, and saving anything in the admin refreshes the cache (`src/lib/revalidate.ts`).
 - **Preview:** the "Preview" button in the admin opens the site showing saved drafts, behind a staff-only switch (`/api/preview`). A bar at the top has an "Exit preview" link.
 - **Age step:** the remembered age is a session cookie (`sp_age`) so the server can render the right page.
-- **Cart:** each cart line keeps a small snapshot of the product. Prices and stock are not re-checked yet; that arrives with Razorpay checkout.
+- **Cart:** each cart line keeps a small snapshot of the product for display, but the server prices the bag (see Discounts). The payment step is still a demo until Razorpay is connected.
 - **Demo products:** `npm run demo-fill` fills clearly fake SKUs (prefixed `DEMO-`), barcodes, weights and box sizes and publishes every product that is otherwise complete. `npm run demo-fill -- --undo` removes them again. Products with no fabric listed stay as drafts until someone fills it in.
 - **Layout:** `src/storefront/` holds the shop components and styles, `src/lib/cms.ts` loads CMS data on the server.
+
+## Discounts (slice 4)
+
+Marketing > Discounts holds every offer: a percentage off, a flat amount off, buy X get Y, or free shipping, either automatic or with a code.
+
+- **Rules:** switch on or off, optional start and end time, applies to everything / certain categories / certain products, minimum spend, first order only, once per customer.
+- **Best single offer wins.** Tick "Can combine with other offers" for offers that should stack (free shipping is the usual one). A typed code wins a tie.
+- **Headline sale:** one automatic offer can be marked "This is the headline sale". Its name and text fill the header tag, and product pages say what it is, so the header, product pages and the bag can never disagree. The fields in Site > Announcement are only a fallback.
+- **Prices are checked on the server.** The bag sends only product, size and quantity to `POST /api/storefront/quote`; prices, stock, offers and codes are all looked up there (`src/lib/quote.ts`, rules in `src/lib/discounts.ts`). Secret codes are never sent to the browser. Sold-out or removed items are flagged and block checkout.
+- **Demo-level:** first-order and once-per-customer checks use orders saved in the shopper's browser, matched on the email or phone typed at checkout. Real enforcement needs real customer accounts and orders.
+- **Seed:** `npm run seed:discounts` creates the live Dreamtime Sale (10% off, headline) and four switched-off examples (welcome code, buy 2 get 1, free shipping code, flat amount off). Nothing else is live until someone switches it on.
+- **Checks:** `npm run check:discounts` (37 engine examples, no database), `npm run check:quote` (16 checks against the running site) and `npm run check:discount-admin` (18 admin rules).
 
 ## Content (slice 2)
 

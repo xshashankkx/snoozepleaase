@@ -4,6 +4,7 @@ import { unstable_cache } from 'next/cache'
 import { getPayload, type Where } from 'payload'
 import config from '@payload-config'
 import { mapMedia, mapProduct } from '@/storefront/lib/product'
+import { offerText } from '@/lib/discounts'
 
 // Everything the storefront reads from the CMS. Published content is cached and refreshed the
 // moment someone presses Publish (see lib/revalidate.ts). In preview mode drafts are read live.
@@ -26,9 +27,9 @@ export async function ageFromCookie(): Promise<string | null> {
   }
 }
 
-async function cached<T>(draft: Draft, key: string, fn: () => Promise<T>): Promise<T> {
+async function cached<T>(draft: Draft, key: string, fn: () => Promise<T>, revalidate = 3600): Promise<T> {
   if (draft) return fn()
-  return unstable_cache(fn, [key], { tags: ['cms'], revalidate: 3600 })()
+  return unstable_cache(fn, [key], { tags: ['cms'], revalidate })()
 }
 
 const pub = (draft: Draft): Where => (draft ? {} : { _status: { equals: 'published' } })
@@ -63,6 +64,18 @@ export async function getSite(draft: Draft) {
     const s: any = settings
     const a: any = announcement
     const ag: any = age
+    // The headline sale (if one is live) supplies the header tag and the product-page note, so they
+    // always match what the bag charges.
+    const now = Date.now()
+    const live = (await payload.find({ collection: 'discounts', where: { and: [{ active: { equals: true } }, { method: { equals: 'automatic' } }, { 'headline.showInHeader': { equals: true } }] }, limit: 5, depth: 0 })).docs
+      .filter((d: any) => (!d.startsAt || new Date(d.startsAt).getTime() <= now) && (!d.endsAt || new Date(d.endsAt).getTime() >= now))[0] as any
+    const sale = live
+      ? {
+          name: live.headline?.tagName || live.title,
+          text: live.headline?.tagText || offerText(live),
+          percent: live.type === 'percentage' && (live.appliesTo ?? 'all') === 'all' ? live.value : null,
+        }
+      : null
     return {
       settings: {
         brandName: s.brandName || 'Snooze Pleaase', tagline: s.tagline || '', whatsapp: s.whatsapp || '', email: s.email || '', instagram: s.instagram || '', hours: s.hours || '',
@@ -73,7 +86,7 @@ export async function getSite(draft: Draft) {
       nav: { header: (nav as any).header || [], footer: (nav as any).footer || [] },
       announcement: {
         bar: a.bar?.enabled && a.bar?.text ? { text: a.bar.text, label: a.bar.link?.label || '', url: a.bar.link?.url || '' } : null,
-        saleTag: a.saleTag?.enabled ? { name: a.saleTag.name || 'Sale', offerText: a.saleTag.offerText || '', url: a.saleTag.url || '/collections/all' } : null,
+        saleTag: a.saleTag?.enabled ? { name: sale?.name || a.saleTag.name || 'Sale', offerText: sale ? sale.text : a.saleTag.offerText || '', url: a.saleTag.url || '/collections/all' } : null,
       },
       age: {
         heading: ag.heading || 'Who are you shopping for?', intro: ag.intro || '', skipLabel: ag.skipLabel || 'Show me everything',
@@ -82,8 +95,9 @@ export async function getSite(draft: Draft) {
         })),
       },
       categories,
+      sale,
     }
-  })
+  }, 300)
 }
 
 export async function getHome(draft: Draft) {

@@ -2,7 +2,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import Image from 'next/image'
 import { Link, NavLink, useLocation, useNavigate } from '../lib/router'
-import { useStore } from '../store/StoreProvider'
+import { useStore, useQuote } from '../store/StoreProvider'
+import { CodeBox, SumRows } from './CodeBox'
 import { useSite } from '../lib/site'
 import { money, mapProduct, searchProducts } from '../lib/product'
 import { IconSearch, IconHeart, IconMenu, IconClose, IconPlus, IconMinus, IconTrash, IconArrow, IconBag } from './Icons'
@@ -171,13 +172,13 @@ export function Footer() {
 }
 
 export function CartDrawer() {
-  const { ui, open, lines, setQty, remove, pricing } = useStore()
-  const { settings, announcement } = useSite()
+  const { ui, open, lines, setQty, remove, hydrated } = useStore()
+  const { settings } = useSite()
   const go = useGo()
   const closeRef = useRef(null)
   const asideRef = useRef(null)
   useFocusTrap(asideRef, ui.cart)
-  const t = pricing('standard')
+  const { quote: t, loading, status, unavailable, error } = useQuote('standard')
   const { pathname } = useLocation()
   useEffect(() => { open('cart', false) }, [pathname])
   useEffect(() => {
@@ -187,8 +188,7 @@ export function CartDrawer() {
     window.addEventListener('keydown', k)
     return () => window.removeEventListener('keydown', k)
   }, [ui.cart])
-  const pct = Math.min(100, Math.round((t.afterSale / settings.freeShippingOver) * 100))
-  const saleName = announcement.saleTag?.name || 'Sale'
+  const pct = Math.min(100, Math.round((t.afterDiscount / settings.freeShippingOver) * 100))
 
   return (
     <>
@@ -212,34 +212,41 @@ export function CartDrawer() {
               <div className="meter" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow={pct} aria-label="Progress to free shipping"><i style={{ '--p': pct / 100 }} /></div>
             </div>
             <ul className="drawer__lines" data-lenis-prevent>
-              {lines.map((l) => (
-                <li key={l.variantId}>
-                  <Link to={`/products/${l.handle}`} className="drawer__img"><img src={l.product.images[0]} alt="" /></Link>
-                  <div className="drawer__info">
-                    <Link to={`/products/${l.handle}`} className="drawer__title">{l.product.title}</Link>
-                    <p className="muted">{l.variant.size}</p>
-                    <div className="stepper" role="group" aria-label={`Quantity for ${l.product.title}`}>
-                      <button type="button" onClick={() => (l.qty > 1 ? setQty(l.variantId, l.qty - 1) : remove(l.variantId))} aria-label="Decrease quantity"><IconMinus width={16} height={16} /></button>
-                      <output>{l.qty}</output>
-                      <button type="button" onClick={() => setQty(l.variantId, l.qty + 1)} disabled={l.qty >= l.variant.stock} aria-label="Increase quantity"><IconPlus width={16} height={16} /></button>
+              {lines.map((l) => {
+                const gone = status[l.variantId] === 'gone' || status[l.variantId] === 'soldout'
+                return (
+                  <li key={l.variantId} className={gone ? 'is-gone' : ''}>
+                    <Link to={`/products/${l.handle}`} className="drawer__img"><img src={l.product.images[0]} alt="" /></Link>
+                    <div className="drawer__info">
+                      <Link to={`/products/${l.handle}`} className="drawer__title">{l.product.title}</Link>
+                      <p className="muted">{l.variant.size}</p>
+                      {gone ? <p className="low">{status[l.variantId] === 'soldout' ? 'Sold out' : 'No longer available'}. Please remove it to continue.</p> : (
+                        <>
+                          <div className="stepper" role="group" aria-label={`Quantity for ${l.product.title}`}>
+                            <button type="button" onClick={() => (l.qty > 1 ? setQty(l.variantId, l.qty - 1) : remove(l.variantId))} aria-label="Decrease quantity"><IconMinus width={16} height={16} /></button>
+                            <output>{l.qty}</output>
+                            <button type="button" onClick={() => setQty(l.variantId, l.qty + 1)} disabled={l.qty >= l.variant.stock} aria-label="Increase quantity"><IconPlus width={16} height={16} /></button>
+                          </div>
+                          {l.variant.stock <= 5 && <p className="low">Only {l.variant.stock} left in this size</p>}
+                        </>
+                      )}
                     </div>
-                    {l.variant.stock <= 5 && <p className="low">Only {l.variant.stock} left in this size</p>}
-                  </div>
-                  <div className="drawer__price">
-                    <strong>{money(l.variant.price * l.qty)}</strong>
-                    <button type="button" className="icon-btn" onClick={() => remove(l.variantId)} aria-label={`Remove ${l.product.title}`}><IconTrash width={18} height={18} /></button>
-                  </div>
-                </li>
-              ))}
+                    <div className="drawer__price">
+                      <strong>{gone ? '' : money(l.variant.price * l.qty)}</strong>
+                      <button type="button" className="icon-btn" onClick={() => remove(l.variantId)} aria-label={`Remove ${l.product.title}`}><IconTrash width={18} height={18} /></button>
+                    </div>
+                  </li>
+                )
+              })}
             </ul>
             <div className="drawer__foot">
+              <CodeBox quote={t} loading={loading} />
               <dl className="sums">
-                <div><dt>Subtotal</dt><dd>{money(t.subtotal)}</dd></div>
-                <div className="sale"><dt>{saleName}</dt><dd>−{money(t.discount)}</dd></div>
-                <div><dt>Shipping</dt><dd>{t.shipping === 0 ? 'Free' : money(t.shipping)}</dd></div>
+                <SumRows quote={t} />
                 <div className="total"><dt>Total</dt><dd>{money(t.total)}</dd></div>
               </dl>
-              <button type="button" className="btn btn--yellow btn--lg" onClick={() => go('/checkout')}>Checkout <IconArrow width={20} height={20} /></button>
+              {error && <p className="field-err" role="alert">{error}</p>}
+              <button type="button" className="btn btn--yellow btn--lg" disabled={!hydrated || unavailable} onClick={() => go('/checkout')}>Checkout <IconArrow width={20} height={20} /></button>
               <button type="button" className="link-btn" onClick={() => open('cart', false)}>Keep shopping</button>
             </div>
           </>

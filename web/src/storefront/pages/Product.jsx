@@ -7,7 +7,7 @@ import BoxFrame from '../components/BoxFrame'
 import ProductCard from '../components/ProductCard'
 import { IconHeart, IconMinus, IconPlus, IconTruck, IconRuler, IconRefresh, IconCheck } from '../components/Icons'
 import { money, stockLabel, sizeFits, sizeInside } from '../lib/product'
-import { useSite, SALE_PERCENT } from '../lib/site'
+import { useSite } from '../lib/site'
 import { useStore } from '../store/StoreProvider'
 import { flyToBag } from '../lib/fly'
 import { Reveal } from '../lib/hooks'
@@ -20,7 +20,7 @@ function Para({ t }) {
 
 export default function Product({ p, related = /** @type {any[]} */ ([]) }) {
   const { addToCart, open, toggleWish, isWished, age } = useStore()
-  const { settings, announcement, categories, age: ageCfg } = useSite()
+  const { settings, sale, categories, age: ageCfg } = useSite()
   const stage = ageCfg.stages.find((s) => s.key === age) || null
   const fits = (size) => !!stage && sizeFits(size, stage)
   const [slide, setSlide] = useState(0)
@@ -107,7 +107,7 @@ export default function Product({ p, related = /** @type {any[]} */ ([]) }) {
               {(variant?.was || p.was) && <s>{money(variant?.was || p.was)}</s>}
               {p.off > 0 && <span className="tag">{p.off}% off</span>}
             </p>
-            <p className="info__sale"><Star10 /> {announcement.saleTag?.name || 'Sale'}: extra {SALE_PERCENT}% off is taken off in your bag.</p>
+            {sale && <p className="info__sale"><Star10 /> {sale.name}: {sale.percent ? `extra ${sale.percent}% off is taken off in your bag.` : `${String(sale.text).toLowerCase()} in your bag.`}</p>}
             {p.fabric && <p className="info__fabric"><IconCheck width={18} height={18} /> {p.fabric}</p>}
 
             <div id="size-group" className={shake ? 'shake' : ''}>

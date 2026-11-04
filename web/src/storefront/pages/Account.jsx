@@ -157,7 +157,7 @@ export function Order() {
             </ul>
             <dl className="sums">
               <div><dt>Subtotal</dt><dd>{money(o.totals.subtotal)}</dd></div>
-              <div className="sale"><dt>Dreamtime Sale</dt><dd>−{money(o.totals.discount)}</dd></div>
+              {(o.discounts || []).filter((d) => d.amount > 0 && o.totals.discount > 0).map((d) => <div key={d.id} className="sale"><dt>{d.title}{d.code ? ` (${d.code})` : ''}</dt><dd>−{money(d.amount)}</dd></div>)}
               <div><dt>Shipping</dt><dd>{o.totals.shipping === 0 ? 'Free' : money(o.totals.shipping)}</dd></div>
               <div className="total"><dt>Total</dt><dd>{money(o.totals.total)}</dd></div>
             </dl>

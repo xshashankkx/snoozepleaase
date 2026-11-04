@@ -6,5 +6,3 @@ const Ctx = createContext(null)
 export const SiteProvider = ({ site, children }) => <Ctx.Provider value={site}>{children}</Ctx.Provider>
 export const useSite = () => useContext(Ctx)
 
-// The sale percentage becomes a CMS rule in the Discounts slice; until then it lives here.
-export const SALE_PERCENT = 10
