@@ -7,7 +7,7 @@ import { globalDrafts, publicRead } from '../lib/fields'
 export const Announcement: GlobalConfig = {
   slug: 'announcement',
   label: 'Announcement bar and sale tag',
-  admin: { group: 'Site', description: 'The strip above the header and the "Dreamtime Sale" tag. Use Schedule to switch them on and off at set times.' },
+  admin: { preview: () => `/api/preview?path=${encodeURIComponent('/')}`, group: 'Site', description: 'The strip above the header and the "Dreamtime Sale" tag. Use Schedule to switch them on and off at set times.' },
   custom: publicRead,
   access: { read: () => true, update: isStaff },
   versions: globalDrafts,

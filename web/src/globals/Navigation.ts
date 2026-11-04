@@ -6,7 +6,7 @@ import { globalDrafts, linkFields, publicRead } from '../lib/fields'
 export const Navigation: GlobalConfig = {
   slug: 'navigation',
   label: 'Navigation menus',
-  admin: { group: 'Site', description: 'The links in the header and footer, in order.' },
+  admin: { preview: () => `/api/preview?path=${encodeURIComponent('/')}`, group: 'Site', description: 'The links in the header and footer, in order.' },
   custom: publicRead,
   access: { read: () => true, update: isStaff },
   versions: globalDrafts,

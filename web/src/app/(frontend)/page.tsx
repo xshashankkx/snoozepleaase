@@ -1,15 +1,30 @@
-import Link from 'next/link'
-import React from 'react'
+import type { Metadata } from 'next'
+import Home from '@/storefront/pages/Home'
+import { byIds, getCatalog, getHome, getSite, isPreview } from '@/lib/cms'
+import { seoMeta } from '@/lib/seo'
 
-// Placeholder until slice 3 moves the storefront over to Next.js.
-export default function HomePage() {
+export async function generateMetadata(): Promise<Metadata> {
+  const home = await getHome(await isPreview())
+  return seoMeta(home.seo, { title: 'Snooze Pleaase | Dream big, sleep cozy', description: home.subline, path: '/' })
+}
+
+export default async function HomePage() {
+  const draft = await isPreview()
+  const [home, catalog, site] = await Promise.all([getHome(draft), getCatalog(draft), getSite(draft)])
+  const boxes = home.boxes
+    .map((b: any) => {
+      const cat = site.categories.find((c: any) => c.slug === b.category)
+      const product = catalog.find((p: any) => p.id === b.product)
+      return cat && product ? { slug: cat.slug, label: cat.label, blurb: cat.blurb, product } : null
+    })
+    .filter(Boolean)
   return (
-    <div style={{ display: 'grid', placeItems: 'center', minHeight: '70vh', textAlign: 'center', gap: '1rem', padding: '2rem' }}>
-      <h1 style={{ fontSize: '2.2rem', margin: 0 }}>Snooze Pleaase CMS</h1>
-      <p style={{ maxWidth: '38ch', margin: 0 }}>The storefront moves into this project in a later step. For now, open the admin to manage products.</p>
-      <Link href="/admin" style={{ background: '#ffd83d', color: '#101f5a', padding: '0.8rem 1.6rem', borderRadius: 999, fontWeight: 700, textDecoration: 'none' }}>
-        Open the admin
-      </Link>
-    </div>
+    <Home
+      home={home}
+      featured={byIds(catalog, home.featured)}
+      bestSellers={byIds(catalog, home.bestSellers)}
+      newArrivals={byIds(catalog, home.newArrivals)}
+      boxes={boxes as any}
+    />
   )
 }

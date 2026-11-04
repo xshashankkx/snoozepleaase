@@ -5,6 +5,7 @@ import { buildConfig } from 'payload'
 import { fileURLToPath } from 'url'
 import sharp from 'sharp'
 import { payloadTotp } from 'payload-totp'
+import { withRefresh } from './lib/revalidate'
 
 import { Users } from './collections/Users'
 import { Media } from './collections/Media'
@@ -32,8 +33,8 @@ export default buildConfig({
       graphics: { Logo: '/components/admin/Logo#Logo', Icon: '/components/admin/Icon#Icon' },
     },
   },
-  collections: [Products, ProductCollections, SizeCharts, Pages, Posts, Events, Media, Users],
-  globals: [HomePage, AgeStep, Announcement, Navigation, SiteSettings],
+  collections: [Products, ProductCollections, SizeCharts, Pages, Posts, Events, Media].map(withRefresh).concat([Users] as any),
+  globals: [HomePage, AgeStep, Announcement, Navigation, SiteSettings].map(withRefresh),
   editor: lexicalEditor(),
   secret: process.env.PAYLOAD_SECRET || '',
   typescript: { outputFile: path.resolve(dirname, 'payload-types.ts') },

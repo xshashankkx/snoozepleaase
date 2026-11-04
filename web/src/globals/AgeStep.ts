@@ -6,7 +6,7 @@ import { globalDrafts, publicRead } from '../lib/fields'
 export const AgeStep: GlobalConfig = {
   slug: 'age-step',
   label: 'Age step (growth chart)',
-  admin: { group: 'Site', description: 'The growth chart shoppers see before Kids Nightwear, Co-ords and Shop now.' },
+  admin: { preview: () => `/api/preview?path=${encodeURIComponent('/collections/all')}`, group: 'Site', description: 'The growth chart shoppers see before Kids Nightwear, Co-ords and Shop now.' },
   custom: publicRead,
   access: { read: () => true, update: isStaff },
   versions: globalDrafts,

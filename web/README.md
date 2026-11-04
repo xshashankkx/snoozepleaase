@@ -1,6 +1,6 @@
-# Snooze Pleaase CMS (slices 1 and 2: products and content)
+# Snooze Pleaase storefront and CMS (slices 1 to 3)
 
-Next.js + Payload CMS + PostgreSQL. The storefront will move into this project in a later slice; for now it is the admin for products.
+Next.js + Payload CMS + PostgreSQL. One project: the admin at `/admin` and the shop at `/`. The Vite storefront in the repository root is the earlier prototype; this project replaces it.
 
 ## First run
 
@@ -20,6 +20,18 @@ Next.js + Payload CMS + PostgreSQL. The storefront will move into this project i
    ```bash
    npm run seed:content
    ```
+
+## The storefront (slice 3)
+
+The shop is the same design as the prototype, now server-rendered and reading everything from the CMS: home page sections, menus, announcement bar, age-step words and stages, collections, products, pages, blog and events.
+
+- **Fast and searchable:** pages arrive as finished HTML with titles, descriptions, share images, product structured data (price, stock, breadcrumbs), `sitemap.xml` and `robots.txt`. Old Shopify collection addresses redirect to the new ones.
+- **Publish goes live in seconds:** content is cached, and saving anything in the admin refreshes the cache (`src/lib/revalidate.ts`).
+- **Preview:** the "Preview" button in the admin opens the site showing saved drafts, behind a staff-only switch (`/api/preview`). A bar at the top has an "Exit preview" link.
+- **Age step:** the remembered age is a session cookie (`sp_age`) so the server can render the right page.
+- **Cart:** each cart line keeps a small snapshot of the product. Prices and stock are not re-checked yet; that arrives with Razorpay checkout.
+- **Demo products:** `npm run demo-fill` fills clearly fake SKUs (prefixed `DEMO-`), barcodes, weights and box sizes and publishes every product that is otherwise complete. `npm run demo-fill -- --undo` removes them again. Products with no fabric listed stay as drafts until someone fills it in.
+- **Layout:** `src/storefront/` holds the shop components and styles, `src/lib/cms.ts` loads CMS data on the server.
 
 ## Content (slice 2)
 

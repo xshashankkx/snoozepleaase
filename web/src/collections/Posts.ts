@@ -6,7 +6,7 @@ import { draftsWithSchedule, publicRead, publishedOrStaff, seoField, slugField }
 export const Posts: CollectionConfig = {
   slug: 'posts',
   labels: { singular: 'Blog post', plural: 'Blog posts' },
-  admin: { useAsTitle: 'title', defaultColumns: ['title', 'publishedOn', '_status', 'updatedAt'], group: 'Content' },
+  admin: { preview: (doc: any) => `/api/preview?path=${encodeURIComponent(`/blog/${doc?.slug}`)}`, useAsTitle: 'title', defaultColumns: ['title', 'publishedOn', '_status', 'updatedAt'], group: 'Content' },
   custom: publicRead,
   access: { read: publishedOrStaff, create: isStaff, update: isStaff, delete: isStaff },
   versions: draftsWithSchedule,

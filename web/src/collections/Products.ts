@@ -6,7 +6,7 @@ import { exportSheet, importSheet } from '../lib/sheet'
 export const Products: CollectionConfig = {
   slug: 'products',
   labels: { singular: 'Product', plural: 'Products' },
-  admin: {
+  admin: { preview: (doc: any) => `/api/preview?path=${encodeURIComponent(`/products/${doc?.handle}`)}`,
     useAsTitle: 'title',
     defaultColumns: ['title', 'category', 'isComplete', '_status', 'updatedAt'],
     listSearchableFields: ['title', 'handle', 'variants.sku'],

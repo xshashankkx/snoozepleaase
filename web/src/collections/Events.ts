@@ -6,7 +6,7 @@ import { draftsWithSchedule, publicRead, publishedOrStaff, seoField, slugField }
 export const Events: CollectionConfig = {
   slug: 'events',
   labels: { singular: 'Event', plural: 'Events' },
-  admin: { useAsTitle: 'name', defaultColumns: ['name', 'city', 'startsOn', 'endsOn', '_status'], group: 'Content' },
+  admin: { preview: (doc: any) => `/api/preview?path=${encodeURIComponent('/events')}`, useAsTitle: 'name', defaultColumns: ['name', 'city', 'startsOn', 'endsOn', '_status'], group: 'Content' },
   custom: publicRead,
   access: { read: publishedOrStaff, create: isStaff, update: isStaff, delete: isStaff },
   versions: draftsWithSchedule,

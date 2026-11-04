@@ -21,7 +21,7 @@ const cta = (name: string, label: string, defaults: { label: string; url: string
 export const HomePage: GlobalConfig = {
   slug: 'home-page',
   label: 'Home page',
-  admin: { group: 'Site', description: 'Each tab is one section of the home page, from top to bottom.' },
+  admin: { preview: () => `/api/preview?path=${encodeURIComponent('/')}`, group: 'Site', description: 'Each tab is one section of the home page, from top to bottom.' },
   custom: publicRead,
   access: { read: () => true, update: isStaff },
   versions: globalDrafts,
