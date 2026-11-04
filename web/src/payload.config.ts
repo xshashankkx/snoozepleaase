@@ -10,6 +10,15 @@ import { Users } from './collections/Users'
 import { Media } from './collections/Media'
 import { Products } from './collections/Products'
 import { SizeCharts } from './collections/SizeCharts'
+import { Pages } from './collections/Pages'
+import { Posts } from './collections/Posts'
+import { Events } from './collections/Events'
+import { ProductCollections } from './collections/ProductCollections'
+import { HomePage } from './globals/HomePage'
+import { AgeStep } from './globals/AgeStep'
+import { Announcement } from './globals/Announcement'
+import { Navigation } from './globals/Navigation'
+import { SiteSettings } from './globals/SiteSettings'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
@@ -23,7 +32,8 @@ export default buildConfig({
       graphics: { Logo: '/components/admin/Logo#Logo', Icon: '/components/admin/Icon#Icon' },
     },
   },
-  collections: [Products, SizeCharts, Media, Users],
+  collections: [Products, ProductCollections, SizeCharts, Pages, Posts, Events, Media, Users],
+  globals: [HomePage, AgeStep, Announcement, Navigation, SiteSettings],
   editor: lexicalEditor(),
   secret: process.env.PAYLOAD_SECRET || '',
   typescript: { outputFile: path.resolve(dirname, 'payload-types.ts') },

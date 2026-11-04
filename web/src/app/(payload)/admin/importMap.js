@@ -23,12 +23,14 @@ import { BoldFeatureClient as BoldFeatureClient_e70f5e05f09f93e00b997edb1ef0c864
 import { ItalicFeatureClient as ItalicFeatureClient_e70f5e05f09f93e00b997edb1ef0c864 } from '@payloadcms/richtext-lexical/client'
 import { ReadyCell as ReadyCell_cf9e69452cfdc0c5961a62ef6732e214 } from '../../../components/admin/ReadyCell'
 import { SheetTools as SheetTools_22884a8ee13e7baa86b54262ea050bfc } from '../../../components/admin/SheetTools'
-import { TOTPField as TOTPField_4eaf6cb33cfb75be01716613e3c9a512 } from 'payload-totp/rsc'
+import { QuestionLabel as QuestionLabel_a30613d846a340cabc3fc2ee7ca0f9f2 } from '../../../components/admin/RowLabels'
+import { MessageLabel as MessageLabel_a30613d846a340cabc3fc2ee7ca0f9f2 } from '../../../components/admin/RowLabels'
+import { PromiseLabel as PromiseLabel_a30613d846a340cabc3fc2ee7ca0f9f2 } from '../../../components/admin/RowLabels'
+import { StageLabel as StageLabel_a30613d846a340cabc3fc2ee7ca0f9f2 } from '../../../components/admin/RowLabels'
+import { LinkLabel as LinkLabel_a30613d846a340cabc3fc2ee7ca0f9f2 } from '../../../components/admin/RowLabels'
+import { ColumnLabel as ColumnLabel_a30613d846a340cabc3fc2ee7ca0f9f2 } from '../../../components/admin/RowLabels'
 import { Icon as Icon_dfe4008080d895d460898c3a6155e9ba } from '../../../components/admin/Icon'
 import { Logo as Logo_91a09b539d3c86b0aebf520e7564ce08 } from '../../../components/admin/Logo'
-import { TOTPProvider as TOTPProvider_4eaf6cb33cfb75be01716613e3c9a512 } from 'payload-totp/rsc'
-import { TOTPSetup as TOTPSetup_4eaf6cb33cfb75be01716613e3c9a512 } from 'payload-totp/rsc'
-import { TOTPVerify as TOTPVerify_4eaf6cb33cfb75be01716613e3c9a512 } from 'payload-totp/rsc'
 import { CollectionCards as CollectionCards_f9c02e79a4aed9a3924487c0cd4cafb1 } from '@payloadcms/next/rsc'
 
 /** @type import('payload').ImportMap */
@@ -58,11 +60,13 @@ export const importMap = {
   "@payloadcms/richtext-lexical/client#ItalicFeatureClient": ItalicFeatureClient_e70f5e05f09f93e00b997edb1ef0c864,
   "/components/admin/ReadyCell#ReadyCell": ReadyCell_cf9e69452cfdc0c5961a62ef6732e214,
   "/components/admin/SheetTools#SheetTools": SheetTools_22884a8ee13e7baa86b54262ea050bfc,
-  "payload-totp/rsc#TOTPField": TOTPField_4eaf6cb33cfb75be01716613e3c9a512,
+  "/components/admin/RowLabels#QuestionLabel": QuestionLabel_a30613d846a340cabc3fc2ee7ca0f9f2,
+  "/components/admin/RowLabels#MessageLabel": MessageLabel_a30613d846a340cabc3fc2ee7ca0f9f2,
+  "/components/admin/RowLabels#PromiseLabel": PromiseLabel_a30613d846a340cabc3fc2ee7ca0f9f2,
+  "/components/admin/RowLabels#StageLabel": StageLabel_a30613d846a340cabc3fc2ee7ca0f9f2,
+  "/components/admin/RowLabels#LinkLabel": LinkLabel_a30613d846a340cabc3fc2ee7ca0f9f2,
+  "/components/admin/RowLabels#ColumnLabel": ColumnLabel_a30613d846a340cabc3fc2ee7ca0f9f2,
   "/components/admin/Icon#Icon": Icon_dfe4008080d895d460898c3a6155e9ba,
   "/components/admin/Logo#Logo": Logo_91a09b539d3c86b0aebf520e7564ce08,
-  "payload-totp/rsc#TOTPProvider": TOTPProvider_4eaf6cb33cfb75be01716613e3c9a512,
-  "payload-totp/rsc#TOTPSetup": TOTPSetup_4eaf6cb33cfb75be01716613e3c9a512,
-  "payload-totp/rsc#TOTPVerify": TOTPVerify_4eaf6cb33cfb75be01716613e3c9a512,
   "@payloadcms/next/rsc#CollectionCards": CollectionCards_f9c02e79a4aed9a3924487c0cd4cafb1
 }

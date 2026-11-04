@@ -12,6 +12,7 @@
     "generate:types": "cross-env NODE_OPTIONS=--no-deprecation payload generate:types",
     "payload": "cross-env NODE_OPTIONS=--no-deprecation payload",
     "seed": "cross-env NODE_OPTIONS=--no-deprecation tsx scripts/seed.ts",
+    "seed:content": "cross-env NODE_OPTIONS=--no-deprecation tsx scripts/seed-content.ts",
     "dev-owner": "cross-env NODE_OPTIONS=--no-deprecation tsx scripts/dev-owner.ts"
   },
   "dependencies": {

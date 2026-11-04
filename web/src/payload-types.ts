@@ -68,7 +68,11 @@ export interface Config {
   blocks: {};
   collections: {
     products: Product;
+    'product-collections': ProductCollection;
     'size-charts': SizeChart;
+    pages: Page;
+    posts: Post;
+    events: Event;
     media: Media;
     users: User;
     'totp-attempts': TotpAttempt;
@@ -81,7 +85,11 @@ export interface Config {
   collectionsJoins: {};
   collectionsSelect: {
     products: ProductsSelect<false> | ProductsSelect<true>;
+    'product-collections': ProductCollectionsSelect<false> | ProductCollectionsSelect<true>;
     'size-charts': SizeChartsSelect<false> | SizeChartsSelect<true>;
+    pages: PagesSelect<false> | PagesSelect<true>;
+    posts: PostsSelect<false> | PostsSelect<true>;
+    events: EventsSelect<false> | EventsSelect<true>;
     media: MediaSelect<false> | MediaSelect<true>;
     users: UsersSelect<false> | UsersSelect<true>;
     'totp-attempts': TotpAttemptsSelect<false> | TotpAttemptsSelect<true>;
@@ -95,8 +103,20 @@ export interface Config {
     defaultIDType: number;
   };
   fallbackLocale: null;
-  globals: {};
-  globalsSelect: {};
+  globals: {
+    'home-page': HomePage;
+    'age-step': AgeStep;
+    announcement: Announcement;
+    navigation: Navigation;
+    'site-settings': SiteSetting;
+  };
+  globalsSelect: {
+    'home-page': HomePageSelect<false> | HomePageSelect<true>;
+    'age-step': AgeStepSelect<false> | AgeStepSelect<true>;
+    announcement: AnnouncementSelect<false> | AnnouncementSelect<true>;
+    navigation: NavigationSelect<false> | NavigationSelect<true>;
+    'site-settings': SiteSettingsSelect<false> | SiteSettingsSelect<true>;
+  };
   locale: null;
   widgets: {
     collections: CollectionsWidget;
@@ -317,6 +337,248 @@ export interface SizeChart {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "product-collections".
+ */
+export interface ProductCollection {
+  id: number;
+  title: string;
+  /**
+   * The web address, for example best-sellers becomes /collections/best-sellers.
+   */
+  slug: string;
+  /**
+   * A category lists every product with that category. A curated list is hand-picked.
+   */
+  kind: 'category' | 'curated';
+  category?: ('kids-nightwear' | 'co-ords' | 'bath-towels' | 'mom-me') | null;
+  /**
+   * One line shown under the heading.
+   */
+  blurb?: string | null;
+  /**
+   * Pick products in the order they should appear.
+   */
+  products?: (number | Product)[] | null;
+  image?: (number | null) | Media;
+  seo?: {
+    /**
+     * Shown in Google results. Leave empty to use the page title.
+     */
+    metaTitle?: string | null;
+    /**
+     * One or two sentences. Google shows about 160 characters.
+     */
+    metaDescription?: string | null;
+    /**
+     * Shown when the link is shared on WhatsApp or Instagram.
+     */
+    shareImage?: (number | null) | Media;
+  };
+  updatedAt: string;
+  createdAt: string;
+  _status?: ('draft' | 'published') | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "pages".
+ */
+export interface Page {
+  id: number;
+  title: string;
+  /**
+   * The web address, for example about-us becomes /pages/about-us. Changing it breaks old links.
+   */
+  slug: string;
+  /**
+   * Standard is a heading and text. The others add extra sections.
+   */
+  template: 'standard' | 'about' | 'faq' | 'size-guide' | 'contact';
+  /**
+   * A short opening line shown under the heading.
+   */
+  intro?: string | null;
+  body?: {
+    root: {
+      type: string;
+      children: {
+        type: any;
+        version: number;
+        [k: string]: unknown;
+      }[];
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+      indent: number;
+      version: number;
+    };
+    [k: string]: unknown;
+  } | null;
+  /**
+   * Shown as an accordion, in this order.
+   */
+  faqs?:
+    | {
+        question: string;
+        answer: {
+          root: {
+            type: string;
+            children: {
+              type: any;
+              version: number;
+              [k: string]: unknown;
+            }[];
+            direction: ('ltr' | 'rtl') | null;
+            format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+            indent: number;
+            version: number;
+          };
+          [k: string]: unknown;
+        };
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * The chart to show on this page.
+   */
+  sizeChart?: (number | null) | SizeChart;
+  /**
+   * Shown beside the text.
+   */
+  photos?:
+    | {
+        image: number | Media;
+        id?: string | null;
+      }[]
+    | null;
+  seo?: {
+    /**
+     * Shown in Google results. Leave empty to use the page title.
+     */
+    metaTitle?: string | null;
+    /**
+     * One or two sentences. Google shows about 160 characters.
+     */
+    metaDescription?: string | null;
+    /**
+     * Shown when the link is shared on WhatsApp or Instagram.
+     */
+    shareImage?: (number | null) | Media;
+  };
+  updatedAt: string;
+  createdAt: string;
+  _status?: ('draft' | 'published') | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "posts".
+ */
+export interface Post {
+  id: number;
+  title: string;
+  /**
+   * The web address, for example my-first-post becomes /blog/my-first-post.
+   */
+  slug: string;
+  /**
+   * A short summary shown on the blog list and in search results.
+   */
+  excerpt?: string | null;
+  coverImage?: (number | null) | Media;
+  body?: {
+    root: {
+      type: string;
+      children: {
+        type: any;
+        version: number;
+        [k: string]: unknown;
+      }[];
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+      indent: number;
+      version: number;
+    };
+    [k: string]: unknown;
+  } | null;
+  /**
+   * For example: Snooze Pleaase team.
+   */
+  author?: string | null;
+  /**
+   * Filled in when you publish. Change it to backdate.
+   */
+  publishedOn?: string | null;
+  /**
+   * Press Enter after each tag.
+   */
+  tags?: string[] | null;
+  seo?: {
+    /**
+     * Shown in Google results. Leave empty to use the page title.
+     */
+    metaTitle?: string | null;
+    /**
+     * One or two sentences. Google shows about 160 characters.
+     */
+    metaDescription?: string | null;
+    /**
+     * Shown when the link is shared on WhatsApp or Instagram.
+     */
+    shareImage?: (number | null) | Media;
+  };
+  updatedAt: string;
+  createdAt: string;
+  _status?: ('draft' | 'published') | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "events".
+ */
+export interface Event {
+  id: number;
+  /**
+   * For example: Mumbai Kids Fair.
+   */
+  name: string;
+  /**
+   * Used in the web address of the event.
+   */
+  slug: string;
+  startsOn: string;
+  endsOn: string;
+  /**
+   * Name of the place.
+   */
+  venue: string;
+  city: string;
+  /**
+   * Where to find us, for example Hall 2, Stall B12.
+   */
+  stall?: string | null;
+  description?: string | null;
+  image?: (number | null) | Media;
+  /**
+   * Optional link to the event page or map.
+   */
+  link?: string | null;
+  seo?: {
+    /**
+     * Shown in Google results. Leave empty to use the page title.
+     */
+    metaTitle?: string | null;
+    /**
+     * One or two sentences. Google shows about 160 characters.
+     */
+    metaDescription?: string | null;
+    /**
+     * Shown when the link is shared on WhatsApp or Instagram.
+     */
+    shareImage?: (number | null) | Media;
+  };
+  updatedAt: string;
+  createdAt: string;
+  _status?: ('draft' | 'published') | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "users".
  */
 export interface User {
@@ -327,7 +589,6 @@ export interface User {
    */
   role: 'owner' | 'manager';
   totpSecret?: string | null;
-  hasTotp?: boolean | null;
   updatedAt: string;
   createdAt: string;
   email: string;
@@ -478,8 +739,24 @@ export interface PayloadLockedDocument {
         value: number | Product;
       } | null)
     | ({
+        relationTo: 'product-collections';
+        value: number | ProductCollection;
+      } | null)
+    | ({
         relationTo: 'size-charts';
         value: number | SizeChart;
+      } | null)
+    | ({
+        relationTo: 'pages';
+        value: number | Page;
+      } | null)
+    | ({
+        relationTo: 'posts';
+        value: number | Post;
+      } | null)
+    | ({
+        relationTo: 'events';
+        value: number | Event;
       } | null)
     | ({
         relationTo: 'media';
@@ -586,6 +863,29 @@ export interface ProductsSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "product-collections_select".
+ */
+export interface ProductCollectionsSelect<T extends boolean = true> {
+  title?: T;
+  slug?: T;
+  kind?: T;
+  category?: T;
+  blurb?: T;
+  products?: T;
+  image?: T;
+  seo?:
+    | T
+    | {
+        metaTitle?: T;
+        metaDescription?: T;
+        shareImage?: T;
+      };
+  updatedAt?: T;
+  createdAt?: T;
+  _status?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "size-charts_select".
  */
 export interface SizeChartsSelect<T extends boolean = true> {
@@ -603,6 +903,91 @@ export interface SizeChartsSelect<T extends boolean = true> {
   note?: T;
   updatedAt?: T;
   createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "pages_select".
+ */
+export interface PagesSelect<T extends boolean = true> {
+  title?: T;
+  slug?: T;
+  template?: T;
+  intro?: T;
+  body?: T;
+  faqs?:
+    | T
+    | {
+        question?: T;
+        answer?: T;
+        id?: T;
+      };
+  sizeChart?: T;
+  photos?:
+    | T
+    | {
+        image?: T;
+        id?: T;
+      };
+  seo?:
+    | T
+    | {
+        metaTitle?: T;
+        metaDescription?: T;
+        shareImage?: T;
+      };
+  updatedAt?: T;
+  createdAt?: T;
+  _status?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "posts_select".
+ */
+export interface PostsSelect<T extends boolean = true> {
+  title?: T;
+  slug?: T;
+  excerpt?: T;
+  coverImage?: T;
+  body?: T;
+  author?: T;
+  publishedOn?: T;
+  tags?: T;
+  seo?:
+    | T
+    | {
+        metaTitle?: T;
+        metaDescription?: T;
+        shareImage?: T;
+      };
+  updatedAt?: T;
+  createdAt?: T;
+  _status?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "events_select".
+ */
+export interface EventsSelect<T extends boolean = true> {
+  name?: T;
+  slug?: T;
+  startsOn?: T;
+  endsOn?: T;
+  venue?: T;
+  city?: T;
+  stall?: T;
+  description?: T;
+  image?: T;
+  link?: T;
+  seo?:
+    | T
+    | {
+        metaTitle?: T;
+        metaDescription?: T;
+        shareImage?: T;
+      };
+  updatedAt?: T;
+  createdAt?: T;
+  _status?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -664,7 +1049,6 @@ export interface UsersSelect<T extends boolean = true> {
   name?: T;
   role?: T;
   totpSecret?: T;
-  hasTotp?: T;
   updatedAt?: T;
   createdAt?: T;
   email?: T;
@@ -764,6 +1148,527 @@ export interface PayloadMigrationsSelect<T extends boolean = true> {
   createdAt?: T;
 }
 /**
+ * Each tab is one section of the home page, from top to bottom.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "home-page".
+ */
+export interface HomePage {
+  id: number;
+  headlineLine1: string;
+  headlineLine2: string;
+  subline?: string | null;
+  primaryButton: {
+    label: string;
+    /**
+     * A page on the site such as /collections/all.
+     */
+    url: string;
+  };
+  secondaryButton: {
+    label: string;
+    /**
+     * A page on the site such as /collections/all.
+     */
+    url: string;
+  };
+  /**
+   * Pick two to four products. Four fill the 2 by 2 grid in the design.
+   */
+  featured: (number | Product)[];
+  ticker?:
+    | {
+        text: string;
+        id?: string | null;
+      }[]
+    | null;
+  bestSellersHeading: string;
+  /**
+   * The curated collection to show here.
+   */
+  bestSellers?: (number | null) | ProductCollection;
+  boxesHeading: string;
+  boxes?:
+    | {
+        category: 'kids-nightwear' | 'co-ords' | 'bath-towels' | 'mom-me';
+        /**
+         * The product whose photo sits in the box window.
+         */
+        photoProduct: number | Product;
+        id?: string | null;
+      }[]
+    | null;
+  storyHeading: string;
+  storyLede?: string | null;
+  promises?:
+    | {
+        icon?: ('leaf' | 'star' | 'shield') | null;
+        title: string;
+        text: string;
+        id?: string | null;
+      }[]
+    | null;
+  storyButton: {
+    label: string;
+    /**
+     * A page on the site such as /collections/all.
+     */
+    url: string;
+  };
+  /**
+   * Two photos side by side.
+   */
+  storyImages?:
+    | {
+        image: number | Media;
+        id?: string | null;
+      }[]
+    | null;
+  stripHeading: string;
+  strip?:
+    | {
+        image: number | Media;
+        id?: string | null;
+      }[]
+    | null;
+  newHeading: string;
+  /**
+   * The curated collection to show here.
+   */
+  newArrivals?: (number | null) | ProductCollection;
+  /**
+   * Press Enter to start a new line.
+   */
+  closingTitle: string;
+  closingButton: {
+    label: string;
+    /**
+     * A page on the site such as /collections/all.
+     */
+    url: string;
+  };
+  seo?: {
+    /**
+     * Shown in Google results. Leave empty to use the page title.
+     */
+    metaTitle?: string | null;
+    /**
+     * One or two sentences. Google shows about 160 characters.
+     */
+    metaDescription?: string | null;
+    /**
+     * Shown when the link is shared on WhatsApp or Instagram.
+     */
+    shareImage?: (number | null) | Media;
+  };
+  _status?: ('draft' | 'published') | null;
+  updatedAt?: string | null;
+  createdAt?: string | null;
+}
+/**
+ * The growth chart shoppers see before Kids Nightwear, Co-ords and Shop now.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "age-step".
+ */
+export interface AgeStep {
+  id: number;
+  heading: string;
+  intro?: string | null;
+  skipLabel?: string | null;
+  /**
+   * Listed from youngest to oldest. A size fits a stage when its age range overlaps the stage, so "3–4 years" fits both a stage ending at 3 and one starting at 4.
+   */
+  stages?:
+    | {
+        /**
+         * For example: Toddler.
+         */
+        label: string;
+        /**
+         * For example: Toddlers. Used in "Picks for toddlers".
+         */
+        plural: string;
+        /**
+         * Short code used in links, for example toddler.
+         */
+        key: string;
+        /**
+         * Shown on the chart, for example 1–3.
+         */
+        agesLabel: string;
+        ageFrom: number;
+        /**
+         * Use 99 for "and up".
+         */
+        ageTo: number;
+        /**
+         * Hand-picked products shown at the top for this stage, in this order.
+         */
+        picks?: (number | Product)[] | null;
+        id?: string | null;
+      }[]
+    | null;
+  _status?: ('draft' | 'published') | null;
+  updatedAt?: string | null;
+  createdAt?: string | null;
+}
+/**
+ * The strip above the header and the "Dreamtime Sale" tag. Use Schedule to switch them on and off at set times.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "announcement".
+ */
+export interface Announcement {
+  id: number;
+  bar?: {
+    enabled?: boolean | null;
+    /**
+     * For example: Free shipping over ₹1,999.
+     */
+    text?: string | null;
+    /**
+     * Optional: makes the banner clickable.
+     */
+    link?: {
+      label?: string | null;
+      url?: string | null;
+    };
+  };
+  saleTag?: {
+    enabled?: boolean | null;
+    name?: string | null;
+    /**
+     * Shown after the name. This text will later be filled in from the active Sale rule.
+     */
+    offerText?: string | null;
+    /**
+     * Where the tag leads, for example /collections/all.
+     */
+    url?: string | null;
+  };
+  _status?: ('draft' | 'published') | null;
+  updatedAt?: string | null;
+  createdAt?: string | null;
+}
+/**
+ * The links in the header and footer, in order.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "navigation".
+ */
+export interface Navigation {
+  id: number;
+  /**
+   * Up to six links. More than that will not fit on a phone.
+   */
+  header?:
+    | {
+        /**
+         * For example: Kids Nightwear.
+         */
+        label: string;
+        /**
+         * A page on the site such as /collections/co-ords or /pages/about-us, or a full link such as https://instagram.com/...
+         */
+        url: string;
+        id?: string | null;
+      }[]
+    | null;
+  footer?:
+    | {
+        heading: string;
+        links?:
+          | {
+              /**
+               * The words shoppers see.
+               */
+              label: string;
+              /**
+               * A page on the site such as /collections/co-ords or /pages/about-us, or a full link such as https://instagram.com/...
+               */
+              url: string;
+              id?: string | null;
+            }[]
+          | null;
+        id?: string | null;
+      }[]
+    | null;
+  _status?: ('draft' | 'published') | null;
+  updatedAt?: string | null;
+  createdAt?: string | null;
+}
+/**
+ * Contact details, shipping rules and defaults. Only the Owner can change these.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "site-settings".
+ */
+export interface SiteSetting {
+  id: number;
+  brandName: string;
+  tagline?: string | null;
+  /**
+   * With country code, for example +91 98765 43210.
+   */
+  whatsapp?: string | null;
+  email?: string | null;
+  /**
+   * The handle without @.
+   */
+  instagram?: string | null;
+  /**
+   * For example: Mon to Sat, 10am to 6pm IST.
+   */
+  hours?: string | null;
+  /**
+   * The company name printed on invoices.
+   */
+  legalName?: string | null;
+  /**
+   * Printed on invoices. Leave empty until registered.
+   */
+  gstin?: string | null;
+  /**
+   * In rupees, after discounts.
+   */
+  freeShippingOver: number;
+  standardShipping: number;
+  expressShipping: number;
+  /**
+   * Shown as "4–7 days".
+   */
+  standardDays?: string | null;
+  expressDays?: string | null;
+  /**
+   * The return window, in days.
+   */
+  returnsDays?: number | null;
+  /**
+   * The wording next to the sign-up tick box. Keep it clear that shoppers can unsubscribe.
+   */
+  newsletterConsent: string;
+  seo?: {
+    /**
+     * Shown in Google results. Leave empty to use the page title.
+     */
+    metaTitle?: string | null;
+    /**
+     * One or two sentences. Google shows about 160 characters.
+     */
+    metaDescription?: string | null;
+    /**
+     * Shown when the link is shared on WhatsApp or Instagram.
+     */
+    shareImage?: (number | null) | Media;
+  };
+  updatedAt?: string | null;
+  createdAt?: string | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "home-page_select".
+ */
+export interface HomePageSelect<T extends boolean = true> {
+  headlineLine1?: T;
+  headlineLine2?: T;
+  subline?: T;
+  primaryButton?:
+    | T
+    | {
+        label?: T;
+        url?: T;
+      };
+  secondaryButton?:
+    | T
+    | {
+        label?: T;
+        url?: T;
+      };
+  featured?: T;
+  ticker?:
+    | T
+    | {
+        text?: T;
+        id?: T;
+      };
+  bestSellersHeading?: T;
+  bestSellers?: T;
+  boxesHeading?: T;
+  boxes?:
+    | T
+    | {
+        category?: T;
+        photoProduct?: T;
+        id?: T;
+      };
+  storyHeading?: T;
+  storyLede?: T;
+  promises?:
+    | T
+    | {
+        icon?: T;
+        title?: T;
+        text?: T;
+        id?: T;
+      };
+  storyButton?:
+    | T
+    | {
+        label?: T;
+        url?: T;
+      };
+  storyImages?:
+    | T
+    | {
+        image?: T;
+        id?: T;
+      };
+  stripHeading?: T;
+  strip?:
+    | T
+    | {
+        image?: T;
+        id?: T;
+      };
+  newHeading?: T;
+  newArrivals?: T;
+  closingTitle?: T;
+  closingButton?:
+    | T
+    | {
+        label?: T;
+        url?: T;
+      };
+  seo?:
+    | T
+    | {
+        metaTitle?: T;
+        metaDescription?: T;
+        shareImage?: T;
+      };
+  _status?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  globalType?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "age-step_select".
+ */
+export interface AgeStepSelect<T extends boolean = true> {
+  heading?: T;
+  intro?: T;
+  skipLabel?: T;
+  stages?:
+    | T
+    | {
+        label?: T;
+        plural?: T;
+        key?: T;
+        agesLabel?: T;
+        ageFrom?: T;
+        ageTo?: T;
+        picks?: T;
+        id?: T;
+      };
+  _status?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  globalType?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "announcement_select".
+ */
+export interface AnnouncementSelect<T extends boolean = true> {
+  bar?:
+    | T
+    | {
+        enabled?: T;
+        text?: T;
+        link?:
+          | T
+          | {
+              label?: T;
+              url?: T;
+            };
+      };
+  saleTag?:
+    | T
+    | {
+        enabled?: T;
+        name?: T;
+        offerText?: T;
+        url?: T;
+      };
+  _status?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  globalType?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "navigation_select".
+ */
+export interface NavigationSelect<T extends boolean = true> {
+  header?:
+    | T
+    | {
+        label?: T;
+        url?: T;
+        id?: T;
+      };
+  footer?:
+    | T
+    | {
+        heading?: T;
+        links?:
+          | T
+          | {
+              label?: T;
+              url?: T;
+              id?: T;
+            };
+        id?: T;
+      };
+  _status?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  globalType?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "site-settings_select".
+ */
+export interface SiteSettingsSelect<T extends boolean = true> {
+  brandName?: T;
+  tagline?: T;
+  whatsapp?: T;
+  email?: T;
+  instagram?: T;
+  hours?: T;
+  legalName?: T;
+  gstin?: T;
+  freeShippingOver?: T;
+  standardShipping?: T;
+  expressShipping?: T;
+  standardDays?: T;
+  expressDays?: T;
+  returnsDays?: T;
+  newsletterConsent?: T;
+  seo?:
+    | T
+    | {
+        metaTitle?: T;
+        metaDescription?: T;
+        shareImage?: T;
+      };
+  updatedAt?: T;
+  createdAt?: T;
+  globalType?: T;
+}
+/**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "collections_widget".
  */
@@ -781,11 +1686,28 @@ export interface TaskSchedulePublish {
   input: {
     type?: ('publish' | 'unpublish') | null;
     locale?: string | null;
-    doc?: {
-      relationTo: 'products';
-      value: number | Product;
-    } | null;
-    global?: string | null;
+    doc?:
+      | ({
+          relationTo: 'products';
+          value: number | Product;
+        } | null)
+      | ({
+          relationTo: 'product-collections';
+          value: number | ProductCollection;
+        } | null)
+      | ({
+          relationTo: 'pages';
+          value: number | Page;
+        } | null)
+      | ({
+          relationTo: 'posts';
+          value: number | Post;
+        } | null)
+      | ({
+          relationTo: 'events';
+          value: number | Event;
+        } | null);
+    global?: ('home-page' | 'age-step' | 'announcement' | 'navigation') | null;
     user?: {
       relationTo: 'users';
       value: number | User;
