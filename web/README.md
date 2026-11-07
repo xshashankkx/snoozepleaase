@@ -1,4 +1,4 @@
-# Snooze Pleaase storefront and CMS (slices 1 to 4)
+# Snooze Pleaase storefront and CMS (slices 1 to 5)
 
 Next.js + Payload CMS + PostgreSQL. One project: the admin at `/admin` and the shop at `/`. The Vite storefront in the repository root is the earlier prototype; this project replaces it.
 
@@ -29,7 +29,7 @@ The shop is the same design as the prototype, now server-rendered and reading ev
 - **Publish goes live in seconds:** content is cached, and saving anything in the admin refreshes the cache (`src/lib/revalidate.ts`).
 - **Preview:** the "Preview" button in the admin opens the site showing saved drafts, behind a staff-only switch (`/api/preview`). A bar at the top has an "Exit preview" link.
 - **Age step:** the remembered age is a session cookie (`sp_age`) so the server can render the right page.
-- **Cart:** each cart line keeps a small snapshot of the product for display, but the server prices the bag (see Discounts). The payment step is still a demo until Razorpay is connected.
+- **Cart:** each cart line keeps a small snapshot of the product for display, but the server prices the bag (see Discounts). Payment goes through Razorpay (see Orders, payments and shipping).
 - **Demo products:** `npm run demo-fill` fills clearly fake SKUs (prefixed `DEMO-`), barcodes, weights and box sizes and publishes every product that is otherwise complete. `npm run demo-fill -- --undo` removes them again. Products with no fabric listed stay as drafts until someone fills it in.
 - **Layout:** `src/storefront/` holds the shop components and styles, `src/lib/cms.ts` loads CMS data on the server.
 
@@ -41,9 +41,39 @@ Marketing > Discounts holds every offer: a percentage off, a flat amount off, bu
 - **Best single offer wins.** Tick "Can combine with other offers" for offers that should stack (free shipping is the usual one). A typed code wins a tie.
 - **Headline sale:** one automatic offer can be marked "This is the headline sale". Its name and text fill the header tag, and product pages say what it is, so the header, product pages and the bag can never disagree. The fields in Site > Announcement are only a fallback.
 - **Prices are checked on the server.** The bag sends only product, size and quantity to `POST /api/storefront/quote`; prices, stock, offers and codes are all looked up there (`src/lib/quote.ts`, rules in `src/lib/discounts.ts`). Secret codes are never sent to the browser. Sold-out or removed items are flagged and block checkout.
-- **Demo-level:** first-order and once-per-customer checks use orders saved in the shopper's browser, matched on the email or phone typed at checkout. Real enforcement needs real customer accounts and orders.
+- **First-order checks:** matched against the orders saved on the server by email or phone (see slice 5). Before the shopper has typed an email or phone, the bag uses a browser hint, only to show a price; checkout always asks the server again.
 - **Seed:** `npm run seed:discounts` creates the live Dreamtime Sale (10% off, headline) and four switched-off examples (welcome code, buy 2 get 1, free shipping code, flat amount off). Nothing else is live until someone switches it on.
 - **Checks:** `npm run check:discounts` (37 engine examples, no database), `npm run check:quote` (16 checks against the running site) and `npm run check:discount-admin` (18 admin rules).
+
+## Orders, payments and shipping (slice 5)
+
+Every order is saved on the server (Sales > Orders). Online payments go through Razorpay; confirmed orders are sent to Shiprocket.
+
+**How an order moves**
+1. The shopper's bag is priced again on the server (`POST /api/storefront/checkout`), including offers, stock, the cash on delivery rules and a delivery check for their pincode.
+2. *Online:* the order waits for payment while Razorpay's window is open. A genuine payment (checked by signature, and again by Razorpay's webhook) makes it **Confirmed**.
+3. *Cash on delivery:* the order waits as **Cash on delivery: to confirm**. A staff member calls or messages the customer, then sets it to **Confirmed**. (A phone OTP needs an SMS provider; that is a later decision.)
+4. Confirmed orders are sent to Shiprocket on their own. If that fails, the order's history says why; tick "Send to Shiprocket again" and save to retry.
+5. Shiprocket's webhook moves the order to Shipped and Delivered.
+
+**Rules in the admin** (Settings > Site settings > Payments and delivery, Owner only): pickup pincode, whether cash on delivery is offered, its limit (default ₹5,000) and an optional fee.
+
+**First-order and once-per-customer offers** now use the real orders on the server, matched on email or phone, so a new email with the same phone number does not get a second welcome offer.
+
+**Not done yet:** stock is not reduced when an order is placed (the inventory ledger will own that), refunds are not started from the admin (refunds made in Razorpay are recorded), no confirmation emails or WhatsApp messages (needs an email/WhatsApp provider), no GST invoices, no returns.
+
+### Connecting real accounts (test mode first)
+
+1. **Razorpay:** create an account, stay in *Test mode*, copy the Key Id and Key Secret into `.env` (`RAZORPAY_KEY_ID`, `RAZORPAY_KEY_SECRET`). For the webhook, go to Settings > Webhooks, add `https://YOUR-SITE/api/webhooks/razorpay`, choose a secret (`RAZORPAY_WEBHOOK_SECRET`) and tick payment.captured, order.paid, payment.failed and refund.processed. Keep auto-capture on. Live keys (`rzp_live_...`) need Razorpay's KYC and the shipping, returns and terms pages to be live.
+2. **Shiprocket:** in Settings > API create an API user with its own email (not your login email), set `SHIPROCKET_EMAIL` and `SHIPROCKET_PASSWORD`. Add your pickup address (Settings > Pickup Addresses) and put its exact name in `SHIPROCKET_PICKUP_LOCATION` and its pincode in `SHIPROCKET_PICKUP_PINCODE`. For tracking updates, add `https://YOUR-SITE/api/webhooks/shiprocket` with a token (`SHIPROCKET_WEBHOOK_TOKEN`). `SHIPROCKET_AUTO_AWB=true` picks a courier automatically, which spends wallet balance; leave it off while testing.
+3. Webhooks need a public address. On a local computer use a tunnel (for example ngrok) or wait until the demo is online.
+4. Fill in real SKUs, weights and box sizes (Shiprocket uses them) and check that the shopper-facing delivery days match what the courier says.
+
+Secrets live only in `.env`, never in the browser. Only the public Razorpay key id reaches the shop's page.
+
+### Testing without accounts (the sandbox)
+
+`npm run dev:sandbox` starts the site on port 3100 pointed at a pretend Razorpay and Shiprocket. `npm run check:orders` (run with `DISABLE_2FA=true`) starts the pretend providers itself and runs 58 checks: wrong signatures, paying twice, changed prices, undeliverable pincodes, COD rules, staff permissions, webhooks and first-order offers. It cleans up after itself. The pretend providers prove our side works; the real services still need a real test order.
 
 ## Content (slice 2)
 

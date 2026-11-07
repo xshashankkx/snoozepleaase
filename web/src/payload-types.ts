@@ -75,6 +75,7 @@ export interface Config {
     posts: Post;
     events: Event;
     media: Media;
+    orders: Order;
     users: User;
     'totp-attempts': TotpAttempt;
     'payload-kv': PayloadKv;
@@ -93,6 +94,7 @@ export interface Config {
     posts: PostsSelect<false> | PostsSelect<true>;
     events: EventsSelect<false> | EventsSelect<true>;
     media: MediaSelect<false> | MediaSelect<true>;
+    orders: OrdersSelect<false> | OrdersSelect<true>;
     users: UsersSelect<false> | UsersSelect<true>;
     'totp-attempts': TotpAttemptsSelect<false> | TotpAttemptsSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
@@ -431,11 +433,11 @@ export interface Discount {
      */
     minSubtotal?: number | null;
     /**
-     * For shoppers with no earlier order. In this demo it is checked against orders saved in the shopper's browser, using the email or phone typed at checkout.
+     * For shoppers with no earlier order. Checked against orders saved on the server, using the email or phone typed at checkout.
      */
     firstOrderOnly?: boolean | null;
     /**
-     * Same demo-level check as above.
+     * Checked the same way.
      */
     oncePerCustomer?: boolean | null;
   };
@@ -664,6 +666,109 @@ export interface Event {
   _status?: ('draft' | 'published') | null;
 }
 /**
+ * Orders placed on the shop. Online orders become Confirmed as soon as the payment arrives; cash on delivery orders wait here until someone confirms them with the customer.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "orders".
+ */
+export interface Order {
+  id: number;
+  number: string;
+  /**
+   * Move a cash on delivery order to Confirmed once the customer has said yes. That sends it to Shiprocket.
+   */
+  status:
+    | 'awaiting_payment'
+    | 'payment_failed'
+    | 'awaiting_confirmation'
+    | 'confirmed'
+    | 'shipped'
+    | 'delivered'
+    | 'cancelled';
+  paymentMethod: 'online' | 'cod';
+  paymentStatus: 'pending' | 'paid' | 'failed' | 'cod' | 'refunded';
+  shippingMethod?: ('standard' | 'express') | null;
+  contact?: {
+    email?: string | null;
+    phone?: string | null;
+  };
+  address?: {
+    name?: string | null;
+    line1?: string | null;
+    line2?: string | null;
+    city?: string | null;
+    state?: string | null;
+    pin?: string | null;
+  };
+  lines?:
+    | {
+        title?: string | null;
+        size?: string | null;
+        sku?: string | null;
+        qty?: number | null;
+        price?: number | null;
+        weightGrams?: number | null;
+        handle?: string | null;
+        variantId?: string | null;
+        image?: string | null;
+        box?: {
+          lengthCm?: number | null;
+          widthCm?: number | null;
+          heightCm?: number | null;
+        };
+        id?: string | null;
+      }[]
+    | null;
+  totals?: {
+    subtotal?: number | null;
+    discount?: number | null;
+    shipping?: number | null;
+    codFee?: number | null;
+    total?: number | null;
+  };
+  discounts?:
+    | {
+        offerId?: string | null;
+        title?: string | null;
+        code?: string | null;
+        amount?: number | null;
+        id?: string | null;
+      }[]
+    | null;
+  note?: string | null;
+  payment?: {
+    razorpayOrderId?: string | null;
+    razorpayPaymentId?: string | null;
+    paidAt?: string | null;
+  };
+  /**
+   * Filled in automatically once the order is confirmed and Shiprocket is connected.
+   */
+  shipment?: {
+    shiprocketOrderId?: string | null;
+    shipmentId?: string | null;
+    awb?: string | null;
+    courier?: string | null;
+    status?: string | null;
+    trackingUrl?: string | null;
+    lastError?: string | null;
+    /**
+     * Tick and save to retry after a problem. Does nothing if the order is already in Shiprocket.
+     */
+    pushAgain?: boolean | null;
+  };
+  timeline?:
+    | {
+        at?: string | null;
+        text?: string | null;
+        id?: string | null;
+      }[]
+    | null;
+  accessToken?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "users".
  */
@@ -675,6 +780,7 @@ export interface User {
    */
   role: 'owner' | 'manager';
   totpSecret?: string | null;
+  hasTotp?: boolean | null;
   updatedAt: string;
   createdAt: string;
   email: string;
@@ -851,6 +957,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'media';
         value: number | Media;
+      } | null)
+    | ({
+        relationTo: 'orders';
+        value: number | Order;
       } | null)
     | ({
         relationTo: 'users';
@@ -1175,12 +1285,109 @@ export interface MediaSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "orders_select".
+ */
+export interface OrdersSelect<T extends boolean = true> {
+  number?: T;
+  status?: T;
+  paymentMethod?: T;
+  paymentStatus?: T;
+  shippingMethod?: T;
+  contact?:
+    | T
+    | {
+        email?: T;
+        phone?: T;
+      };
+  address?:
+    | T
+    | {
+        name?: T;
+        line1?: T;
+        line2?: T;
+        city?: T;
+        state?: T;
+        pin?: T;
+      };
+  lines?:
+    | T
+    | {
+        title?: T;
+        size?: T;
+        sku?: T;
+        qty?: T;
+        price?: T;
+        weightGrams?: T;
+        handle?: T;
+        variantId?: T;
+        image?: T;
+        box?:
+          | T
+          | {
+              lengthCm?: T;
+              widthCm?: T;
+              heightCm?: T;
+            };
+        id?: T;
+      };
+  totals?:
+    | T
+    | {
+        subtotal?: T;
+        discount?: T;
+        shipping?: T;
+        codFee?: T;
+        total?: T;
+      };
+  discounts?:
+    | T
+    | {
+        offerId?: T;
+        title?: T;
+        code?: T;
+        amount?: T;
+        id?: T;
+      };
+  note?: T;
+  payment?:
+    | T
+    | {
+        razorpayOrderId?: T;
+        razorpayPaymentId?: T;
+        paidAt?: T;
+      };
+  shipment?:
+    | T
+    | {
+        shiprocketOrderId?: T;
+        shipmentId?: T;
+        awb?: T;
+        courier?: T;
+        status?: T;
+        trackingUrl?: T;
+        lastError?: T;
+        pushAgain?: T;
+      };
+  timeline?:
+    | T
+    | {
+        at?: T;
+        text?: T;
+        id?: T;
+      };
+  accessToken?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "users_select".
  */
 export interface UsersSelect<T extends boolean = true> {
   name?: T;
   role?: T;
   totpSecret?: T;
+  hasTotp?: T;
   updatedAt?: T;
   createdAt?: T;
   email?: T;
@@ -1577,6 +1784,19 @@ export interface SiteSetting {
    */
   returnsDays?: number | null;
   /**
+   * The pincode parcels leave from (your warehouse). Needed for the delivery check at checkout.
+   */
+  pickupPincode?: string | null;
+  codEnabled?: boolean | null;
+  /**
+   * Orders above this must be paid online. 0 means no limit.
+   */
+  codMaxTotal?: number | null;
+  /**
+   * Added to the total when the customer chooses cash on delivery. 0 for none.
+   */
+  codFee?: number | null;
+  /**
    * The wording next to the sign-up tick box. Keep it clear that shoppers can unsubscribe.
    */
   newsletterConsent: string;
@@ -1788,6 +2008,10 @@ export interface SiteSettingsSelect<T extends boolean = true> {
   standardDays?: T;
   expressDays?: T;
   returnsDays?: T;
+  pickupPincode?: T;
+  codEnabled?: T;
+  codMaxTotal?: T;
+  codFee?: T;
   newsletterConsent?: T;
   seo?:
     | T

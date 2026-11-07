@@ -18,7 +18,10 @@
     "check:discounts": "tsx scripts/check-discounts.ts",
     "demo-fill": "cross-env NODE_OPTIONS=--no-deprecation tsx scripts/demo-fill.ts",
     "seed:content": "cross-env NODE_OPTIONS=--no-deprecation tsx scripts/seed-content.ts",
-    "dev-owner": "cross-env NODE_OPTIONS=--no-deprecation tsx scripts/dev-owner.ts"
+    "dev-owner": "cross-env NODE_OPTIONS=--no-deprecation tsx scripts/dev-owner.ts",
+    "dev:sandbox": "cross-env NODE_OPTIONS=--no-deprecation RAZORPAY_KEY_ID=rzp_test_sandbox RAZORPAY_KEY_SECRET=sandbox_secret RAZORPAY_WEBHOOK_SECRET=sandbox_hook RAZORPAY_API_BASE=http://localhost:4010/rzp SHIPROCKET_EMAIL=api@example.test SHIPROCKET_PASSWORD=sandbox SHIPROCKET_PICKUP_LOCATION=Primary SHIPROCKET_PICKUP_PINCODE=400001 SHIPROCKET_API_BASE=http://localhost:4010/sr SHIPROCKET_WEBHOOK_TOKEN=sandbox_token SHIPROCKET_AUTO_AWB=true next dev --port 3100",
+    "mock:providers": "cross-env NODE_OPTIONS=--no-deprecation tsx scripts/mock-providers.ts",
+    "check:orders": "cross-env NODE_OPTIONS=--no-deprecation tsx scripts/check-orders.ts"
   },
   "dependencies": {
     "@fontsource-variable/grandstander": "^5.3.0",

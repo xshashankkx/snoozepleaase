@@ -70,10 +70,19 @@ export default function Product({ p, related = /** @type {any[]} */ ([]) }) {
       setTimeout(() => open('cart'), 700)
     }
   }
-  const checkPin = (e) => {
+  const checkPin = async (e) => {
     e.preventDefault()
     if (!/^[1-9]\d{5}$/.test(pin)) return setPinMsg({ ok: false, t: 'Enter a valid 6-digit pincode.' })
-    setPinMsg({ ok: true, t: `Delivery to ${pin} in ${settings.standardDays} days. Cash on delivery available.` })
+    setPinMsg({ ok: true, t: 'Checking…' })
+    try {
+      const r = await fetch(`/api/storefront/pincode?pin=${pin}`)
+      const d = await r.json()
+      if (d.serviceable === false) return setPinMsg({ ok: false, t: `Sorry, we cannot deliver to ${pin} yet.` })
+      const days = d.days ? `about ${d.days} days` : `${settings.standardDays} days`
+      setPinMsg({ ok: true, t: `Delivery to ${pin} in ${days}.${d.cod ? ' Cash on delivery available.' : ''}` })
+    } catch {
+      setPinMsg({ ok: true, t: `Delivery to ${pin} usually takes ${settings.standardDays} days.` })
+    }
   }
 
   const paras = p.desc

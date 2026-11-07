@@ -15,6 +15,7 @@ import { Pages } from './collections/Pages'
 import { Posts } from './collections/Posts'
 import { Events } from './collections/Events'
 import { Discounts } from './collections/Discounts'
+import { Orders } from './collections/Orders'
 import { ProductCollections } from './collections/ProductCollections'
 import { HomePage } from './globals/HomePage'
 import { AgeStep } from './globals/AgeStep'
@@ -34,7 +35,7 @@ export default buildConfig({
       graphics: { Logo: '/components/admin/Logo#Logo', Icon: '/components/admin/Icon#Icon' },
     },
   },
-  collections: [Products, ProductCollections, Discounts, SizeCharts, Pages, Posts, Events, Media].map(withRefresh).concat([Users] as any),
+  collections: [Products, ProductCollections, Discounts, SizeCharts, Pages, Posts, Events, Media].map(withRefresh).concat([Orders, Users] as any),
   globals: [HomePage, AgeStep, Announcement, Navigation, SiteSettings].map(withRefresh),
   editor: lexicalEditor(),
   secret: process.env.PAYLOAD_SECRET || '',

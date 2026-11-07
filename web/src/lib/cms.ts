@@ -5,6 +5,7 @@ import { getPayload, type Where } from 'payload'
 import config from '@payload-config'
 import { mapMedia, mapProduct } from '@/storefront/lib/product'
 import { offerText } from '@/lib/discounts'
+import { razorpayConfigured, razorpayTestMode } from '@/lib/razorpay'
 
 // Everything the storefront reads from the CMS. Published content is cached and refreshed the
 // moment someone presses Publish (see lib/revalidate.ts). In preview mode drafts are read live.
@@ -81,6 +82,8 @@ export async function getSite(draft: Draft) {
         brandName: s.brandName || 'Snooze Pleaase', tagline: s.tagline || '', whatsapp: s.whatsapp || '', email: s.email || '', instagram: s.instagram || '', hours: s.hours || '',
         freeShippingOver: s.freeShippingOver ?? 1999, standardShipping: s.standardShipping ?? 79, expressShipping: s.expressShipping ?? 149,
         standardDays: s.standardDays || '4–7', expressDays: s.expressDays || '2–3', returnsDays: s.returnsDays ?? 7,
+        codEnabled: s.codEnabled !== false, codMaxTotal: s.codMaxTotal ?? 5000, codFee: s.codFee ?? 0,
+        payments: { online: razorpayConfigured(), test: razorpayTestMode() },
         newsletterConsent: s.newsletterConsent || '', seo: s.seo ? { ...s.seo, shareImage: mapMedia(s.seo.shareImage) } : null,
       },
       nav: { header: (nav as any).header || [], footer: (nav as any).footer || [] },

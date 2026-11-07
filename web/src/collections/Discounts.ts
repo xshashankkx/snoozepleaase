@@ -118,8 +118,8 @@ export const Discounts: CollectionConfig = {
       name: 'rules', type: 'group', label: 'Rules',
       fields: [
         { name: 'minSubtotal', type: 'number', min: 0, label: 'Minimum spend (₹)', admin: { description: 'Optional. Counted on the items the offer applies to, before this offer.' } },
-        { name: 'firstOrderOnly', type: 'checkbox', label: 'First order only', admin: { description: 'For shoppers with no earlier order. In this demo it is checked against orders saved in the shopper\'s browser, using the email or phone typed at checkout.' } },
-        { name: 'oncePerCustomer', type: 'checkbox', label: 'Once per customer', admin: { description: 'Same demo-level check as above.' } },
+        { name: 'firstOrderOnly', type: 'checkbox', label: 'First order only', admin: { description: 'For shoppers with no earlier order. Checked against orders saved on the server, using the email or phone typed at checkout.' } },
+        { name: 'oncePerCustomer', type: 'checkbox', label: 'Once per customer', admin: { description: 'Checked the same way.' } },
       ],
     },
     { name: 'combinable', type: 'checkbox', defaultValue: false, label: 'Can combine with other offers', admin: { description: 'Off by default: the best single offer wins. Tick this for offers that should stack, such as free shipping.' } },

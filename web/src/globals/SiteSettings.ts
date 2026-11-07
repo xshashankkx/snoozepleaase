@@ -58,6 +58,21 @@ export const SiteSettings: GlobalConfig = {
           ],
         },
         {
+          label: 'Payments and delivery',
+          description: 'Rules for cash on delivery and where parcels are picked up. The Razorpay and Shiprocket logins themselves live in the server settings file, not here.',
+          fields: [
+            { name: 'pickupPincode', label: 'Pickup pincode', type: 'text', admin: { description: 'The pincode parcels leave from (your warehouse). Needed for the delivery check at checkout.' }, validate: (v: unknown) => !v || /^[1-9]\d{5}$/.test(String(v)) || 'Enter a 6-digit pincode.' },
+            {
+              type: 'row',
+              fields: [
+                { name: 'codEnabled', label: 'Offer cash on delivery', type: 'checkbox', defaultValue: true },
+                { name: 'codMaxTotal', label: 'Cash on delivery limit (₹)', type: 'number', min: 0, defaultValue: 5000, admin: { description: 'Orders above this must be paid online. 0 means no limit.' } },
+                { name: 'codFee', label: 'Cash on delivery fee (₹)', type: 'number', min: 0, defaultValue: 0, admin: { description: 'Added to the total when the customer chooses cash on delivery. 0 for none.' } },
+              ],
+            },
+          ],
+        },
+        {
           label: 'Newsletter',
           fields: [
             {

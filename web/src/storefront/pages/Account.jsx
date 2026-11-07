@@ -1,11 +1,12 @@
 'use client'
 import { useEffect, useState } from 'react'
-import { Link, useNavigate, useParams } from '../lib/router'
+import { Link, useNavigate, useParams, useSearchParams } from '../lib/router'
 import Page from '../components/Page'
 import ProductCard from '../components/ProductCard'
 import { Moon, Cloud, Star } from '../components/Doodles'
 import { useStore } from '../store/StoreProvider'
 import { money, mapProduct } from '../lib/product'
+import { useSite } from '../lib/site'
 
 export function Wishlist() {
   const { wish, hydrated } = useStore()
@@ -79,7 +80,7 @@ export function Account() {
                     <li key={o.id}>
                       <Link to={`/order/${o.id}`}>
                         <span className="orders__imgs">{o.lines.slice(0, 3).map((l, i) => <img key={i} src={l.image} alt="" />)}</span>
-                        <span><strong>Order {o.id}</strong><small>{new Date(o.placed).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })} · {o.lines.reduce((t, l) => t + l.qty, 0)} items</small></span>
+                        <span><strong>Order {o.id}</strong><small>{new Date(o.placed).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })} · {o.lines.reduce((t, l) => t + l.qty, 0)} items{o.paymentStatus === 'pending' ? ' · payment pending' : ''}</small></span>
                         <em>{money(o.totals.total)}</em>
                       </Link>
                     </li>
@@ -123,29 +124,74 @@ export function Account() {
   )
 }
 
+const upper = (text, fallback) => Math.max(...(String(text).match(/\d+/g) || [fallback]).map(Number))
+
+// What each stage means to the shopper.
+const STAGES = {
+  awaiting_payment: ['Waiting for your payment', 'Your payment has not gone through yet. Your bag is still saved, so you can try again.'],
+  payment_failed: ['The payment did not go through', 'No money was taken for this order. Your bag is still saved, so you can try again.'],
+  awaiting_confirmation: ['Order received. Sweet dreams!', 'We will call or message you on {phone} to confirm this order before it ships.'],
+  confirmed: ['Order confirmed. Sweet dreams!', 'Thank you. We are getting your order ready.'],
+  shipped: ['Your order is on its way', 'It has left us and is travelling to you.'],
+  delivered: ['Delivered', 'Your order has arrived. We hope it fits and feels cozy.'],
+  cancelled: ['This order was cancelled', 'If you paid online, the money goes back to you. Write to us if you have questions.'],
+}
+
 export function Order() {
   const { id } = useParams()
+  const [sp] = useSearchParams()
   const { orders, hydrated } = useStore()
+  const { settings } = useSite()
   const nav = useNavigate()
-  const o = orders.find((x) => x.id === id)
-  if (!hydrated) return <Page title="Order"><div className="done wrap" /></Page>
+  const token = sp.get('t') || orders.find((x) => x.id === id)?.token
+  const [st, setSt] = useState({ order: null, loading: true })
+
+  // The server holds the real order. Right after an online payment its confirmation can lag by a few seconds, so ask a few times.
+  useEffect(() => {
+    if (!hydrated) return
+    if (!token) { setSt({ order: null, loading: false }); return }
+    let dead = false
+    let tries = 0
+    let timer
+    const load = async () => {
+      try {
+        const r = await fetch(`/api/storefront/order/${encodeURIComponent(id)}?t=${encodeURIComponent(token)}`)
+        if (dead) return
+        if (!r.ok) { setSt({ order: null, loading: false }); return }
+        const o = await r.json()
+        setSt({ order: o, loading: false })
+        if (o.paymentMethod === 'online' && o.paymentStatus === 'pending' && tries++ < 6) timer = setTimeout(load, 4000)
+      } catch {
+        if (!dead) setSt((s) => ({ ...s, loading: false }))
+      }
+    }
+    load()
+    return () => { dead = true; clearTimeout(timer) }
+  }, [hydrated, id, token])
+
+  const o = st.order
+  if (!hydrated || st.loading) return <Page title="Order"><div className="done wrap" /></Page>
   if (!o) {
     return (
       <Page title="Order">
-        <div className="empty wrap"><Cloud className="empty__cloud" /><h1 className="h1">We cannot find that order</h1><p>Demo orders are kept in this browser only.</p><button type="button" className="btn btn--yellow" onClick={() => nav('/collections/all')}>Keep shopping</button></div>
+        <div className="empty wrap"><Cloud className="empty__cloud" /><h1 className="h1">We cannot find that order</h1><p>Open it from the same browser you ordered in, or use the private link from your order message.</p><button type="button" className="btn btn--yellow" onClick={() => nav('/collections/all')}>Keep shopping</button></div>
       </Page>
     )
   }
+  const [heading, body] = STAGES[o.status] || STAGES.confirmed
+  const retry = o.status === 'awaiting_payment' || o.status === 'payment_failed'
   const eta = new Date(o.placed)
-  eta.setDate(eta.getDate() + (o.shipping === 'express' ? 3 : 7))
+  eta.setDate(eta.getDate() + upper(o.shippingMethod === 'express' ? settings.expressDays : settings.standardDays, 7))
+  const payLabel = o.paymentMethod === 'cod' ? 'Cash on delivery' : o.paymentStatus === 'paid' ? 'Paid online' : o.paymentStatus === 'refunded' ? 'Refunded' : 'Online payment: waiting'
   return (
-    <Page title={`Order ${o.id}`}>
+    <Page title={`Order ${o.number}`}>
       <div className="done wrap">
         <div className="done__hero">
           <Moon className="done__moon" />
-          <h1 className="h1">Order placed. Sweet dreams!</h1>
-          <p className="lede">Thank you. This is a demo order, so no email was sent to {o.contact.email}.</p>
-          <p className="done__id">Order number <strong>{o.id}</strong></p>
+          <h1 className="h1">{heading}</h1>
+          <p className="lede">{body.replace('{phone}', o.contact.phone)}</p>
+          <p className="done__id">Order number <strong>{o.number}</strong></p>
+          {retry && <Link to="/checkout" className="btn btn--yellow">Back to checkout</Link>}
         </div>
         <div className="done__grid">
           <section>
@@ -159,16 +205,17 @@ export function Order() {
               <div><dt>Subtotal</dt><dd>{money(o.totals.subtotal)}</dd></div>
               {(o.discounts || []).filter((d) => d.amount > 0 && o.totals.discount > 0).map((d) => <div key={d.id} className="sale"><dt>{d.title}{d.code ? ` (${d.code})` : ''}</dt><dd>−{money(d.amount)}</dd></div>)}
               <div><dt>Shipping</dt><dd>{o.totals.shipping === 0 ? 'Free' : money(o.totals.shipping)}</dd></div>
+              {o.totals.codFee > 0 && <div><dt>Cash on delivery fee</dt><dd>{money(o.totals.codFee)}</dd></div>}
               <div className="total"><dt>Total</dt><dd>{money(o.totals.total)}</dd></div>
             </dl>
           </section>
           <section>
             <h2 className="h3">Delivering to</h2>
             <address>{o.address.name}<br />{o.address.line1}{o.address.line2 && <>, {o.address.line2}</>}<br />{o.address.city}, {o.address.state} {o.address.pin}</address>
-            <h2 className="h3">Estimated arrival</h2>
-            <p>{eta.toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long' })}</p>
+            {o.status !== 'cancelled' && o.status !== 'delivered' && <><h2 className="h3">Estimated arrival</h2><p>By {eta.toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long' })}</p></>}
+            {o.tracking && <><h2 className="h3">Tracking</h2><p>{o.tracking.courier && `${o.tracking.courier} · `}{o.tracking.awb}{o.tracking.status && ` · ${o.tracking.status}`}</p>{o.tracking.url && <p><a href={o.tracking.url} target="_blank" rel="noopener noreferrer">Track your parcel</a></p>}</>}
             <h2 className="h3">Payment</h2>
-            <p>{o.payment}</p>
+            <p>{payLabel}</p>
             <div className="done__acts"><Link to="/collections/all" className="btn btn--yellow">Keep shopping</Link><Link to="/account" className="btn btn--ghost-ink">View account</Link></div>
           </section>
         </div>

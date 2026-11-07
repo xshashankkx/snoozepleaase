@@ -45,7 +45,9 @@ const reducer = (s, a) => {
     case 'code': return { ...s, code: a.code }
     case 'wish': return { ...s, wish: s.wish.includes(a.handle) ? s.wish.filter((h) => h !== a.handle) : [...s.wish, a.handle] }
     case 'user': return { ...s, user: a.user }
-    case 'order': return { ...s, orders: [a.order, ...s.orders], cart: [], code: '' }
+    // An order is saved in this browser as soon as the server has it (so the shopper can find it again), and the bag is only emptied once it is paid or placed.
+    case 'saveOrder': return { ...s, orders: [a.order, ...s.orders.filter((x) => x.id !== a.order.id)] }
+    case 'clearBag': return { ...s, cart: [], code: '' }
     case 'addr': return { ...s, address: a.address }
     default: return s
   }
@@ -81,7 +83,9 @@ export function useQuote(method = 'standard', ident = null) {
   const customer = useMemo(() => customerHints(orders, ident || { email: user?.email }), [orders, user, ident?.email, ident?.phone])
   const [state, setState] = useState({ q: null, loading: false, error: null })
   const local = useMemo(() => localQuote(lines, method, site.settings), [lines, method, site.settings])
-  const key = JSON.stringify([lines.map((l) => [l.handle, l.variantId, l.qty]), code, method, customer])
+  // Only a finished email or phone is sent, so the server is not asked on every keystroke.
+  const who = { email: /^\S+@\S+\.\S+$/.test(ident?.email || user?.email || '') ? (ident?.email || user?.email) : '', phone: /^\d{10}$/.test(ident?.phone || '') ? ident.phone : '' }
+  const key = JSON.stringify([lines.map((l) => [l.handle, l.variantId, l.qty]), code, method, customer, who])
 
   useEffect(() => {
     if (!lines.length) { setState({ q: null, loading: false, error: null }); return }
@@ -91,7 +95,7 @@ export function useQuote(method = 'standard', ident = null) {
       try {
         const r = await fetch('/api/storefront/quote', {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ lines: lines.map((l) => ({ handle: l.handle, variantId: l.variantId, qty: l.qty })), code, method, customer }),
+          body: JSON.stringify({ lines: lines.map((l) => ({ handle: l.handle, variantId: l.variantId, qty: l.qty })), code, method, customer, ident: who }),
         })
         const q = await r.json()
         if (dead) return
@@ -178,19 +182,16 @@ export function StoreProvider({ children, initialAge = null }) {
     signIn: (user) => dispatch({ type: 'user', user }),
     signOut: () => dispatch({ type: 'user', user: null }),
     saveAddress: (address) => dispatch({ type: 'addr', address }),
-    // `quote` is the server's answer for exactly what the shopper saw at checkout.
-    placeOrder: ({ quote, ...details }) => {
+    // `o` is the server's own copy of the order (see publicOrder in lib/checkout.ts) plus the private link token.
+    saveOrder: (o) => {
       const order = {
-        id: 'SP' + Date.now().toString(36).toUpperCase().slice(-6) + Math.floor(Math.random() * 90 + 10),
-        placed: new Date().toISOString(),
-        lines: lines.map((l) => ({ handle: l.handle, title: l.product.title, size: l.variant.size, qty: l.qty, price: l.variant.price, image: l.product.images[0] })),
-        totals: { subtotal: quote.subtotal, discount: quote.discountTotal, shipping: quote.shipping, total: quote.total },
-        discounts: quote.applied.map((a) => ({ id: a.id, title: a.title, amount: a.amount, code: a.code })),
-        ...details,
+        id: o.number, token: o.token, placed: o.placed, status: o.status, lines: o.lines, totals: o.totals, discounts: o.discounts,
+        contact: o.contact, address: o.address, shipping: o.shippingMethod, paymentMethod: o.paymentMethod, paymentStatus: o.paymentStatus,
       }
-      dispatch({ type: 'order', order })
+      dispatch({ type: 'saveOrder', order })
       return order
     },
+    clearBag: () => dispatch({ type: 'clearBag' }),
   }), [s, lines, ui, open, toasts, toast, addToCart, age, setAge, hydrated])
 
   return <Ctx.Provider value={api}>{children}</Ctx.Provider>

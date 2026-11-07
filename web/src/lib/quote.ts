@@ -2,6 +2,7 @@ import 'server-only'
 import { getPayload } from 'payload'
 import config from '@payload-config'
 import { quote, type Line, type Offer, type Customer } from './discounts'
+import { customerHistory } from './customerHistory'
 
 type Status = 'ok' | 'adjusted' | 'soldout' | 'gone'
 export type QuoteLine = { variantId: string; handle: string; title: string; size: string; price: number; qty: number; stock: number; status: Status }
@@ -12,17 +13,26 @@ const clamp = (n: unknown, lo: number, hi: number) => Math.min(hi, Math.max(lo, 
 // Prices the bag from the catalog, never from what the browser says: the browser only sends
 // which product, which size and how many. Everything else is looked up here.
 export async function buildQuote(body: any) {
+  return (await priceBag(body)).quote
+}
+
+// Same as buildQuote, and also hands back the catalog products it priced (the order needs their SKUs, weights and images).
+export async function priceBag(body: any) {
   const raw: any[] = Array.isArray(body?.lines) ? body.lines.slice(0, 50) : []
   const wanted = raw
     .map((l) => ({ handle: String(l?.handle ?? '').slice(0, 200), variantId: String(l?.variantId ?? '').slice(0, 64), qty: clamp(l?.qty, 1, 20) }))
     .filter((l) => l.handle && l.variantId)
   const method = body?.method === 'express' ? 'express' : 'standard'
-  const customer: Customer = {
-    firstOrder: typeof body?.customer?.firstOrder === 'boolean' ? body.customer.firstOrder : undefined,
-    usedOfferIds: Array.isArray(body?.customer?.usedOfferIds) ? body.customer.usedOfferIds.slice(0, 50).map((x: unknown) => String(x)) : [],
-  }
 
   const payload = await getPayload({ config })
+  // With an email or phone, the shopper's real history comes from saved orders. Without one, the browser's
+  // hint is used, which is only good enough to show a price: the checkout always asks again with the real history.
+  const customer: Customer = body?.ident && (body.ident.email || body.ident.phone)
+    ? await customerHistory(payload, body.ident)
+    : {
+        firstOrder: typeof body?.customer?.firstOrder === 'boolean' ? body.customer.firstOrder : undefined,
+        usedOfferIds: Array.isArray(body?.customer?.usedOfferIds) ? body.customer.usedOfferIds.slice(0, 50).map((x: unknown) => String(x)) : [],
+      }
   const handles = [...new Set(wanted.map((l) => l.handle))]
   const products = handles.length
     ? (await payload.find({ collection: 'products', where: { and: [{ handle: { in: handles } }, { _status: { equals: 'published' } }] }, limit: 100, depth: 0 })).docs as any[]
@@ -53,5 +63,5 @@ export async function buildQuote(body: any) {
     lines, offers, code: typeof body?.code === 'string' ? body.code : null, customer, method,
     shipping: { standard: settings.standardShipping ?? 79, express: settings.expressShipping ?? 149, freeOver: settings.freeShippingOver ?? 1999 },
   })
-  return { ...q, lines: report }
+  return { quote: { ...q, lines: report }, products, customer }
 }
